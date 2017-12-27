@@ -1,11 +1,7 @@
 package com.isa.arnhem.isarest.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.collect.ImmutableMap;
-import com.isa.arnhem.isarest.models.Description;
-import com.isa.arnhem.isarest.models.Representable;
-import com.isa.arnhem.isarest.models.User;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

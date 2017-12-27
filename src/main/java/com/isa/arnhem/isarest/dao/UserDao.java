@@ -7,13 +7,10 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class UserDao extends CrudDao<User> {
-    public UserDao(MongoClient client) {
-        super(client, "users");
-    }
 
     @Autowired
-    public UserDao(IsaMongoClient client) {
-        super(client, "users");
+    public UserDao(MongoClient mongoClient) {
+        super(mongoClient, "users");
     }
 
     public User findByUsername(String username) {

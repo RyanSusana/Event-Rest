@@ -12,7 +12,7 @@ public class TestMongo {
     public static void main(String[] args) throws UnirestException, JsonProcessingException {
 
 
-        User ryan = new User("Ryiin", "ryansusana@live.com", "test", UserType.ISA_MEMBER);
+        User ryan = new User("Ryiin", "ryansusana@live.com", "test", UserType.MEMBER);
         System.out.println(ryan.getId());
         String res = Unirest.post("http://localhost:8086/api/users").header("accept", "application/json")
                 .header("Content-Type", "application/json").body(new ObjectMapper().writeValueAsString(ryan)).asString().getBody();

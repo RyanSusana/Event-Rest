@@ -7,13 +7,11 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class EventDao extends CrudDao<Event> {
-    public EventDao(MongoClient client) {
-        super(client, "events");
-    }
 
     @Autowired
-    public EventDao(IsaMongoClient client) {
-        super(client, "events");
+    public EventDao(MongoClient mongoClient) {
+        super(mongoClient, "events");
     }
+
 
 }

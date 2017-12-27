@@ -1,10 +1,7 @@
 package com.isa.arnhem.isarest.dao;
 
-import com.google.common.collect.Lists;
 import org.jongo.Find;
 import org.jongo.FindOne;
-
-import java.util.List;
 
 
 public interface Crud<T> {

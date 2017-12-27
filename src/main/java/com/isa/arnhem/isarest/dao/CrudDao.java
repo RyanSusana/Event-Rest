@@ -1,12 +1,12 @@
 package com.isa.arnhem.isarest.dao;
 
-import com.mongodb.MongoClient;
 import org.jongo.Find;
 import org.jongo.FindOne;
+import org.jongo.Jongo;
 
 public class CrudDao<T> extends Dao implements Crud<T> {
-    public CrudDao(MongoClient client, String collectionName) {
-        super(client, collectionName);
+    public CrudDao(Jongo jongo, String collectionName) {
+        super(jongo, collectionName);
     }
 
     @Override

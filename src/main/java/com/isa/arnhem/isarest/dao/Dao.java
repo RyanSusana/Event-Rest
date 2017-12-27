@@ -1,22 +1,25 @@
 package com.isa.arnhem.isarest.dao;
 
-import com.isa.arnhem.isarest.IsaRestApplication;
-import com.mongodb.MongoClient;
 import org.jongo.Jongo;
 import org.jongo.MongoCollection;
+import org.springframework.context.annotation.PropertySource;
 
+
+@PropertySource("application.properties")
 public abstract class Dao {
-    final MongoClient client;
     final Jongo jongo;
     final String collectionName;
 
-    public Dao(MongoClient client, String collectionName) {
-        this.client = client;
+    private String databaseName;
+
+    public Dao(Jongo jongo,  String collectionName) {
         this.collectionName = collectionName;
-        jongo = new Jongo(client.getDB(IsaRestApplication.DATABASE_NAME));
+        this.jongo = jongo;
     }
 
     public MongoCollection getCollection() {
         return jongo.getCollection(collectionName);
     }
+
+
 }

@@ -1,38 +1,33 @@
 package com.isa.arnhem.isarest.models;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
+import java.time.ZonedDateTime;
+import java.util.Calendar;
+import java.util.Date;
 
 public class User {
     @JsonProperty("user_id")
     private String id;
-
-    private String username, email, password;
-
+    @JsonProperty("username")
+    private String username;
+    @JsonProperty("email")
+    private String email;
+    @JsonProperty("password")
+    private String password;
+    @JsonProperty("type")
     private UserType type;
 
+
     @JsonProperty("creation_date")
-    private final LocalDateTime creationDate;
+    @JsonFormat
+            (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm'Z'")
+    private final Date creationDate;
 
     public User() {
-        id = UUID.randomUUID().toString();
-        creationDate = LocalDateTime.now();
+        this.creationDate = Calendar.getInstance().getTime();
     }
-
-    @JsonCreator
-    public User(@JsonProperty("user_id") String id, @JsonProperty("username") String username, @JsonProperty("email") String email, @JsonProperty("password") String password, @JsonProperty("type") UserType type, @JsonProperty("creation_date") LocalDateTime creationDate) {
-
-        this.id = id;
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        this.type = type;
-        this.creationDate = creationDate;
-    }
-
 
     public User(String username, String email, String password, UserType type) {
         this();

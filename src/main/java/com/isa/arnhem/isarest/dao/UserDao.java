@@ -1,16 +1,17 @@
 package com.isa.arnhem.isarest.dao;
 
 import com.isa.arnhem.isarest.models.User;
-import com.mongodb.MongoClient;
+import org.jongo.Jongo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 @Repository
+
 public class UserDao extends CrudDao<User> {
 
     @Autowired
-    public UserDao(MongoClient mongoClient) {
-        super(mongoClient, "users");
+    public UserDao(Jongo jongo) {
+        super(jongo, "users");
     }
 
     public User findByUsername(String username) {

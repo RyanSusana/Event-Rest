@@ -35,4 +35,9 @@ public class CrudDao<T> extends Dao implements Crud<T> {
         return getCollection().findOne(query);
     }
 
+    @Override
+    public FindOne findOne(String query, Object... params) {
+        return getCollection().findOne(query, params);
+    }
+
 }

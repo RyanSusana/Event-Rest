@@ -19,7 +19,6 @@ public class User {
     @JsonProperty("type")
     private UserType type;
 
-
     @JsonProperty("creation_date")
     @JsonFormat
             (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm'Z'")
@@ -71,17 +70,6 @@ public class User {
 
     public UserType getType() {
         return type;
-    }
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "id='" + id + '\'' +
-                ", username='" + username + '\'' +
-                ", email='" + email + '\'' +
-                ", password='" + password + '\'' +
-                ", type=" + type +
-                '}';
     }
 
 }

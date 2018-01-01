@@ -14,6 +14,7 @@ public interface Crud<T> {
 
     Find find(String query);
     FindOne findOne(String query);
+    FindOne findOne(String query, Object... params);
 
     default Find find() {
         return find("{}");

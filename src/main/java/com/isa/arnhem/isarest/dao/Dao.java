@@ -5,10 +5,9 @@ import org.jongo.MongoCollection;
 import org.springframework.context.annotation.PropertySource;
 
 
-@PropertySource("application.properties")
 public abstract class Dao {
-    final Jongo jongo;
-    final String collectionName;
+    private final Jongo jongo;
+    private final String collectionName;
 
     private String databaseName;
 
@@ -17,7 +16,7 @@ public abstract class Dao {
         this.jongo = jongo;
     }
 
-    public MongoCollection getCollection() {
+    MongoCollection getCollection() {
         return jongo.getCollection(collectionName);
     }
 

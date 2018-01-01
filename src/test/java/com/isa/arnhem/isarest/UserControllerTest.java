@@ -20,10 +20,12 @@ import static org.junit.Assert.assertNotNull;
 public class UserControllerTest {
     UserController controller;
     UserDao userDao;
+
+    //Mocked Mongo database
     Fongo fongo;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         fongo = new Fongo("Fongo Test Server");
         userDao = new UserDao(new Jongo(fongo.getDB("isa-test")));
         controller = new UserController(userDao);
@@ -33,7 +35,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void testAddUser() throws JsonProcessingException {
+    public void testAddUser() {
         User john = new User("John", "", "test", UserType.MEMBER);
         controller.addUser(john);
         assertNotNull(userDao.findByUsername(john.getUsername()));

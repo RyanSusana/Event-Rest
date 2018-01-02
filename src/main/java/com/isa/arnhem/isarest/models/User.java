@@ -3,6 +3,8 @@ package com.isa.arnhem.isarest.models;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.Date;
@@ -27,6 +29,7 @@ public class User {
     public User() {
         this.creationDate = Calendar.getInstance().getTime();
     }
+
 
     public User(String username, String email, String password, UserType type) {
         this();
@@ -72,4 +75,43 @@ public class User {
         return type;
     }
 
+    private String getSaltedPassword() {
+        return this.id + password + this.password + this.id;
+    }
+
+    public boolean samePassword(String id, String password) {
+        try {
+            return (encrypt(id + password + password + id).equals(this.getPassword()));
+        } catch (NoSuchAlgorithmException e) {
+            return false;
+        }
+    }
+
+    public User secure() {
+        try {
+            password = encrypt(getSaltedPassword());
+        } catch (Exception e) {
+        }
+
+        return this;
+    }
+
+    private static String encrypt(final String password) throws NoSuchAlgorithmException {
+
+
+        final MessageDigest digest = MessageDigest.getInstance("MD5");
+        final byte[] passwordBytes = password.getBytes();
+
+        digest.reset();
+        digest.update(passwordBytes);
+        final byte[] message = digest.digest();
+
+        final StringBuffer hexString = new StringBuffer();
+        for (int i = 0; i < message.length; i++) {
+            hexString.append(Integer.toHexString(
+                    0xFF & message[i]));
+        }
+        return hexString.toString();
+
+    }
 }

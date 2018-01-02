@@ -7,7 +7,7 @@ import org.jongo.FindOne;
 public interface Crud<T> {
 
     void create(T... items);
-
+    void delete(String query, Object... params);
     void delete(String query);
 
     void save(T item);

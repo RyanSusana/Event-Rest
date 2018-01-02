@@ -22,5 +22,8 @@ public class UserDao extends CrudDao<User> {
     public User findByUserId(String userId) {
         return findOne("{user_id: #}", userId).as(User.class);
     }
+    public void deleteByUserId(String userId) {
+        delete("{user_id: #}", userId);
+    }
 
 }

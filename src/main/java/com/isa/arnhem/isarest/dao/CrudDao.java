@@ -15,6 +15,11 @@ public class CrudDao<T> extends Dao implements Crud<T> {
     }
 
     @Override
+    public void delete(String query, Object... params) {
+        getCollection().remove(query, params);
+    }
+
+    @Override
     public void delete(String query) {
         getCollection().remove(query);
     }

@@ -28,7 +28,7 @@ public class UserControllerTest {
     public void setUp() {
         fongo = new Fongo("Fongo Test Server");
         userDao = new UserDao(new Jongo(fongo.getDB("isa-test")));
-        controller = new UserController(userDao);
+        controller = new UserController(userDao,null);
 
         User ryan = new User("Ryiin", "ryansusana@live.com", "test", UserType.MEMBER);
         userDao.create(ryan);
@@ -36,7 +36,7 @@ public class UserControllerTest {
 
     @Test
     public void testAddUser() {
-        User john = new User("John", "", "test", UserType.MEMBER);
+        User john = new User("Joe", "ryauana@live.com", "test5", UserType.MEMBER);
         controller.addUser(john);
         assertNotNull(userDao.findByUsername(john.getUsername()));
     }

@@ -26,4 +26,8 @@ public class UserDao extends CrudDao<User> {
         delete("{user_id: #}", userId);
     }
 
+    @Override
+    public void update(User item) {
+        getCollection().update("{user_id: #}", item.getId()).with(item);
+    }
 }

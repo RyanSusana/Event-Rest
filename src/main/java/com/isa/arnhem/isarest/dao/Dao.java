@@ -9,14 +9,13 @@ public abstract class Dao {
     private final Jongo jongo;
     private final String collectionName;
 
-    private String databaseName;
 
     public Dao(Jongo jongo,  String collectionName) {
         this.collectionName = collectionName;
         this.jongo = jongo;
     }
 
-    MongoCollection getCollection() {
+    public MongoCollection getCollection() {
         return jongo.getCollection(collectionName);
     }
 

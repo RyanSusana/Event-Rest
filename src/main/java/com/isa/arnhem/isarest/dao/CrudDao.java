@@ -4,7 +4,7 @@ import org.jongo.Find;
 import org.jongo.FindOne;
 import org.jongo.Jongo;
 
-public class CrudDao<T> extends Dao implements Crud<T> {
+public abstract class CrudDao<T> extends Dao implements Crud<T> {
     public CrudDao(Jongo jongo, String collectionName) {
         super(jongo, collectionName);
     }
@@ -24,15 +24,16 @@ public class CrudDao<T> extends Dao implements Crud<T> {
         getCollection().remove(query);
     }
 
-    @Override
-    public void save(T item) {
-        getCollection().save(item);
-    }
+
 
     @Override
     public Find find(String query) {
-
         return getCollection().find(query);
+    }
+
+    @Override
+    public Find find(String query, Object... params) {
+        return getCollection().find(query, params);
     }
 
     @Override

@@ -10,9 +10,10 @@ public interface Crud<T> {
     void delete(String query, Object... params);
     void delete(String query);
 
-    void save(T item);
+    void update(T item);
 
     Find find(String query);
+    Find find(String query, Object... params);
     FindOne findOne(String query);
     FindOne findOne(String query, Object... params);
 
@@ -24,9 +25,9 @@ public interface Crud<T> {
         delete("{}");
     }
 
-    default void save(T[] items) {
+    default void update(T[] items) {
         for (T item : items) {
-            save(item);
+            update(item);
         }
     }
 

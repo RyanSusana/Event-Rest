@@ -8,8 +8,12 @@ import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Objects;
+import java.util.UUID;
 
 public class User {
+
+
     @JsonProperty("user_id")
     private String id;
     @JsonProperty("username")
@@ -18,7 +22,13 @@ public class User {
     private String email;
     @JsonProperty("password")
     private String password;
+
+    @JsonProperty("full_name")
+    private String fullName;
+
+
     @JsonProperty("type")
+
     private UserType type;
 
     @JsonProperty("creation_date")
@@ -26,8 +36,13 @@ public class User {
             (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm'Z'")
     private final Date creationDate;
 
+    @JsonProperty("activated")
+    private boolean activated;
+
+
     public User() {
         this.creationDate = Calendar.getInstance().getTime();
+        id = UUID.randomUUID().toString();
     }
 
 
@@ -95,6 +110,21 @@ public class User {
 
         return this;
     }
+    public boolean isActivated() {
+        return activated;
+    }
+
+    public void setActivated(boolean activated) {
+        this.activated = activated;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
 
     private static String encrypt(final String password) throws NoSuchAlgorithmException {
 
@@ -114,4 +144,18 @@ public class User {
         return hexString.toString();
 
     }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(id, user.id);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(id);
+    }
+
 }

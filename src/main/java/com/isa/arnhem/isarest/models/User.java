@@ -1,6 +1,7 @@
 package com.isa.arnhem.isarest.models;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.security.MessageDigest;
@@ -11,6 +12,7 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.UUID;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class User {
 
 
@@ -28,7 +30,6 @@ public class User {
 
 
     @JsonProperty("type")
-
     private UserType type;
 
     @JsonProperty("creation_date")

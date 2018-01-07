@@ -2,11 +2,18 @@ package com.isa.arnhem.isarest.models;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.math.BigDecimal;
 import java.util.*;
 
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include= JsonTypeInfo.As.PROPERTY, property="event_type")
+@JsonSubTypes({
+
+        @JsonSubTypes.Type(value=ControlledEvent.class, name="CONTROLLED"),
+})
 public class Event {
 
     @JsonProperty("event_id")

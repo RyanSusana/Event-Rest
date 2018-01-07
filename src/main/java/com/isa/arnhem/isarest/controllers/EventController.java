@@ -64,6 +64,7 @@ public class EventController {
     public ResponseEntity<String> addAttendee(@PathVariable("id") String eventId, @RequestParam String userId) {
         User user = userDao.findByUserId(userId);
         Event event = eventDao.findByEventId(eventId);
+        //TODO controlled event
         if (event == null) {
             return new ResponseEntity<>("Event doesn't exist!", HttpStatus.NOT_FOUND);
 
@@ -98,7 +99,9 @@ public class EventController {
         if (!event.getAttendees().contains(attendee)) {
             return new ResponseEntity<>("Event is already not being attended by this user.", HttpStatus.FORBIDDEN);
         }
+        System.out.println(event.getAttendees().size());
         event.getAttendees().remove(attendee);
+        System.out.println(event.getAttendees().size());
 
         eventDao.update(event);
         return new ResponseEntity<>("Removed " + user.getUsername() + " from the event: " + event.getName(), HttpStatus.OK);

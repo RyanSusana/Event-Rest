@@ -72,7 +72,9 @@ public class UserController {
     @RequestMapping(path = "/{id}", method = RequestMethod.GET)
     public @ResponseBody
     User getUser(@PathVariable("id") String id) {
-        return userDao.findByUserId(id);
+        User user = userDao.findByUserId(id);
+        user.setPassword(null);
+        return user;
     }
 
     @RequestMapping(path = "/{id}/events", method = RequestMethod.GET)

@@ -9,35 +9,37 @@ import java.math.BigDecimal;
 import java.util.*;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include= JsonTypeInfo.As.PROPERTY, property="event_type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = NormalEvent.class, include = JsonTypeInfo.As.PROPERTY, property = "event_type")
 @JsonSubTypes({
 
-        @JsonSubTypes.Type(value=ControlledEvent.class, name="CONTROLLED"),
+        @JsonSubTypes.Type(value = ControlledEvent.class, name = "CONTROLLED"),
+        @JsonSubTypes.Type(value = NormalEvent.class, name = "NORMAL")
 })
-public class Event {
+public abstract class Event implements Comparable<Event> {
 
     @JsonProperty("event_id")
     private final String id;
+
+    @JsonProperty("name")
     private String name;
+
+    @JsonProperty("priority")
+    private int priority = 0;
+
+    @JsonProperty("description")
     private Description description;
 
     @JsonProperty("main_image")
     private String mainImage;
+
+    @JsonProperty("attendees")
     private List<Attendee> attendees = new ArrayList<>();
+
+    @JsonProperty("price")
     private BigDecimal price = new BigDecimal(0);
 
-
+    @JsonProperty("properties")
     private Map<String, Object> properties = new HashMap<>();
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Event event = (Event) o;
-        return Objects.equals(id, event.id);
-    }
-
-
 
 
     public Event(String name, Description description) {
@@ -71,7 +73,6 @@ public class Event {
     }
 
 
-
     public String getMainImage() {
         return mainImage;
     }
@@ -95,11 +96,33 @@ public class Event {
     public void setProperties(Map<String, Object> properties) {
         this.properties = properties;
     }
+
     public List<Attendee> getAttendees() {
         return attendees;
     }
 
     public void setAttendees(List<Attendee> attendees) {
         this.attendees = attendees;
+    }
+
+    public int getPriority() {
+        return priority;
+    }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Event event = (Event) o;
+        return Objects.equals(id, event.id);
+    }
+
+    @Override
+    public int compareTo(Event o) {
+        return Integer.compare(this.getPriority(), o.getPriority());
     }
 }

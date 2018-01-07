@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import com.isa.arnhem.isarest.dao.EventDao;
 import com.isa.arnhem.isarest.dao.UserDao;
 import com.isa.arnhem.isarest.models.Attendee;
+import com.isa.arnhem.isarest.models.ControlledEvent;
 import com.isa.arnhem.isarest.models.Event;
 import com.isa.arnhem.isarest.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,26 +63,38 @@ public class EventController {
 
     @RequestMapping(path = "/{id}/attendees", method = RequestMethod.POST)
     public ResponseEntity<String> addAttendee(@PathVariable("id") String eventId, @RequestParam String userId) {
-        User user = userDao.findByUserId(userId);
-        Event event = eventDao.findByEventId(eventId);
-        //TODO controlled event
+        final User user = userDao.findByUserId(userId);
+        final Event event = eventDao.findByEventId(eventId);
+
         if (event == null) {
             return new ResponseEntity<>("Event doesn't exist!", HttpStatus.NOT_FOUND);
-
         }
         if (user == null) {
             return new ResponseEntity<>("User doesn't exist!", HttpStatus.NOT_FOUND);
-
         }
-        Attendee attendee = new Attendee(userId, Calendar.getInstance().getTime());
+        final Attendee attendee = new Attendee(userId, Calendar.getInstance().getTime());
 
         if (event.getAttendees().contains(attendee)) {
-
             return new ResponseEntity<>("Event is already being attended by this user.", HttpStatus.FORBIDDEN);
         }
-        event.getAttendees().add(attendee);
-        eventDao.update(event);
-        return new ResponseEntity<>("Added " + user.getUsername() + " to the event: " + event.getName(), HttpStatus.OK);
+
+        if (event instanceof ControlledEvent) {
+            final ControlledEvent controlledEvent = (ControlledEvent) (event);
+            if (controlledEvent.getRequestedAttendees().contains(attendee)) {
+                return new ResponseEntity<>("You have already requested to join this event.", HttpStatus.FORBIDDEN);
+            }
+            controlledEvent.getRequestedAttendees().add(attendee);
+            eventDao.update(controlledEvent);
+
+            return new ResponseEntity<>( user.getUsername() + " has requested to join the event: " + controlledEvent.getName(), HttpStatus.OK);
+
+        } else {
+            event.getAttendees().add(attendee);
+            eventDao.update(event);
+
+            return new ResponseEntity<>("Added " + user.getUsername() + " to the event: " + event.getName(), HttpStatus.OK);
+
+        }
     }
 
     @RequestMapping(path = "/{id}/attendees", method = RequestMethod.DELETE)
@@ -99,9 +112,7 @@ public class EventController {
         if (!event.getAttendees().contains(attendee)) {
             return new ResponseEntity<>("Event is already not being attended by this user.", HttpStatus.FORBIDDEN);
         }
-        System.out.println(event.getAttendees().size());
         event.getAttendees().remove(attendee);
-        System.out.println(event.getAttendees().size());
 
         eventDao.update(event);
         return new ResponseEntity<>("Removed " + user.getUsername() + " from the event: " + event.getName(), HttpStatus.OK);

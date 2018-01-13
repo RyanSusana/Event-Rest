@@ -1,4 +1,4 @@
-package com.isa.arnhem.isarest.dao;
+package com.isa.arnhem.isarest.repository;
 
 import org.jongo.Find;
 import org.jongo.FindOne;

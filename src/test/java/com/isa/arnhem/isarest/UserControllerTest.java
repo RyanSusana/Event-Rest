@@ -2,8 +2,8 @@ package com.isa.arnhem.isarest;
 
 import com.github.fakemongo.Fongo;
 import com.isa.arnhem.isarest.controllers.UserController;
-import com.isa.arnhem.isarest.dao.EventDao;
-import com.isa.arnhem.isarest.dao.UserDao;
+import com.isa.arnhem.isarest.repository.EventDao;
+import com.isa.arnhem.isarest.repository.UserDao;
 import com.isa.arnhem.isarest.models.User;
 import com.isa.arnhem.isarest.models.UserType;
 import org.jongo.Jongo;

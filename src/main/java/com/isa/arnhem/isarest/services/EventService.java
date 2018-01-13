@@ -1,10 +1,11 @@
 package com.isa.arnhem.isarest.services;
 
-import com.isa.arnhem.isarest.dao.EventDao;
-import com.isa.arnhem.isarest.dao.NotificationDao;
-import com.isa.arnhem.isarest.dao.UserDao;
+import com.isa.arnhem.isarest.repository.EventDao;
+import com.isa.arnhem.isarest.repository.NotificationDao;
+import com.isa.arnhem.isarest.repository.UserDao;
 import com.isa.arnhem.isarest.models.*;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,18 +15,12 @@ import java.util.List;
 
 @Service
 @Getter
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class EventService {
     private final EventDao eventDao;
     private final UserDao userDao;
 
     private final NotificationDao notificationDao;
-
-    @Autowired
-    public EventService(EventDao eventDao, UserDao userDao, NotificationDao notificationDao) {
-        this.eventDao = eventDao;
-        this.userDao = userDao;
-        this.notificationDao = notificationDao;
-    }
 
     public ResponseMessage addUserToEvent(final String eventId, final String userId) {
         final User user = userDao.findByUserId(userId);

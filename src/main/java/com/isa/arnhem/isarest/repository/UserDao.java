@@ -1,4 +1,4 @@
-package com.isa.arnhem.isarest.dao;
+package com.isa.arnhem.isarest.repository;
 
 import com.google.common.collect.Lists;
 import com.isa.arnhem.isarest.models.User;

@@ -1,7 +1,7 @@
 package com.isa.arnhem.isarest.services;
 
-import com.isa.arnhem.isarest.dao.EventDao;
-import com.isa.arnhem.isarest.dao.UserDao;
+import com.isa.arnhem.isarest.repository.EventDao;
+import com.isa.arnhem.isarest.repository.UserDao;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,4 +1,4 @@
-package com.isa.arnhem.isarest.dao;
+package com.isa.arnhem.isarest.repository;
 
 import com.isa.arnhem.isarest.models.Event;
 import org.jongo.Jongo;

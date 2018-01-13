@@ -14,11 +14,11 @@ public class EventDao extends CrudDao<Event> {
     }
 
     public Event findByEventId(String eventId) {
-        return findOne("{event_id: #}", eventId).as(Event.class);
+        return findOne("{_id: #}", eventId).as(Event.class);
     }
 
     @Override
     public void update(Event item) {
-        getCollection().update("{event_id: #}", item.getId()).with(item);
+        getCollection().save(item);
     }
 }

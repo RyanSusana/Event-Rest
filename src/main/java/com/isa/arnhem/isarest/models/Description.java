@@ -1,5 +1,6 @@
 package com.isa.arnhem.isarest.models;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 

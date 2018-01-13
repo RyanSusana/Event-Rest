@@ -2,10 +2,9 @@ package com.isa.arnhem.isarest.controllers;
 
 
 import com.google.common.collect.Lists;
-import com.isa.arnhem.isarest.models.Event;
-import com.isa.arnhem.isarest.models.User;
-import com.isa.arnhem.isarest.models.UserType;
+import com.isa.arnhem.isarest.models.*;
 import com.isa.arnhem.isarest.services.UserService;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +19,7 @@ import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping(path = "/api/users")
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
+@AllArgsConstructor(onConstructor = @__(@Autowired))
 public class UserController {
 
     private final UserService userService;
@@ -32,35 +31,37 @@ public class UserController {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> addUser(@RequestBody User user) {
+    public ResponseEntity<ResponseMessage> addUser(@RequestBody User user) {
 
 
         final String evaluatedUsername = evaluateUsername(user.getUsername());
 
         if (evaluatedUsername != null) {
-            return new ResponseEntity<>(evaluatedUsername, HttpStatus.FORBIDDEN);
+            return ResponseMessage.builder().message(evaluatedUsername).messageType(ResponseMessageType.CLIENT_ERROR).build().toResponseEntity();
         }
         if (userService.getUserDao().findByUsername(user.getUsername()) != null) {
-            return new ResponseEntity<>("This username already taken!", HttpStatus.FORBIDDEN);
+            return ResponseMessage.builder().message("This username already taken!").messageType(ResponseMessageType.CLIENT_ERROR).build().toResponseEntity();
         }
         if (!EmailValidator.getInstance().isValid(user.getEmail())) {
-            return new ResponseEntity<>("This is an invalid email!", HttpStatus.FORBIDDEN);
+            return ResponseMessage.builder().message("This is an invalid email!").messageType(ResponseMessageType.CLIENT_ERROR).build().toResponseEntity();
         }
         if (userService.getUserDao().findByEmail(user.getEmail()) != null) {
-            return new ResponseEntity<>("This e-mail address is already in use!", HttpStatus.FORBIDDEN);
+            return ResponseMessage.builder().message("This e-mail address is already in use!").messageType(ResponseMessageType.CLIENT_ERROR).build().toResponseEntity();
+
         }
 
         int passwordLength = user.getPassword().length();
 
         if (passwordLength < 5 || passwordLength > 50) {
-            return new ResponseEntity<>("Password must be between 4 and 50 characters long", HttpStatus.FORBIDDEN);
+            return ResponseMessage.builder().message("Password must be between 4 and 50 characters long").messageType(ResponseMessageType.CLIENT_ERROR).build().toResponseEntity();
+
         }
 
         user.setType(UserType.MEMBER);
         user.setActivated(false);
         userService.getUserDao().create(user.secure());
-        return new ResponseEntity<>("Created: " + user.getUsername(), HttpStatus.CREATED);
-    }
+        return ResponseMessage.builder().message("Created: " + user.getUsername()).messageType(ResponseMessageType.SUCCESSFUL).build().toResponseEntity();
+        }
 
     @RequestMapping(path = "/{id}", method = RequestMethod.GET)
     public @ResponseBody
@@ -119,21 +120,22 @@ public class UserController {
 
     public String evaluateUsername(String username) {
 
+        if(username.startsWith(".")|| username.endsWith(".")){
+            return "Username can't begin or end with a dot!";
+        }
         if (username == null || username.isEmpty()) {
             return "Username can't be empty!";
         }
-//        boolean hasUppercase = !username.equals(username.toLowerCase());
 
-        Pattern p = Pattern.compile("^[a-zA-Z0-9._]+$/");
+        Pattern p = Pattern.compile("[^a-z0-9._ ]", Pattern.CASE_INSENSITIVE);
         Matcher m = p.matcher(username);
-
 
         if (m.find()) {
             return "Username can't have special characters!";
         }
 
-        if (username.length() > 10) {
-            return "Username must be less than 11 characters long";
+        if (username.length() > 35) {
+            return "Username must be less than 36 characters long";
         }
         return null;
     }

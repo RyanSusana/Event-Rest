@@ -13,9 +13,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 @Service
 @Getter
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class EventService {
     private final EventDao eventDao;
     private final UserDao userDao;

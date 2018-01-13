@@ -3,6 +3,7 @@ package com.isa.arnhem.isarest.models;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,11 +18,10 @@ import java.util.UUID;
 @Getter
 @Setter
 @EqualsAndHashCode(of = "id")
-public class User {
+public class User implements Identifiable{
 
-
-    @JsonProperty("user_id")
     private String id;
+
     @JsonProperty("username")
     private String username;
     @JsonProperty("email")

@@ -4,7 +4,7 @@ package com.isa.arnhem.isarest.controllers;
 import com.google.common.collect.Lists;
 import com.isa.arnhem.isarest.models.*;
 import com.isa.arnhem.isarest.services.EventService;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(path = "/api/events")
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
+@AllArgsConstructor(onConstructor = @__(@Autowired))
 public class EventController {
 
     private final EventService eventService;

@@ -33,16 +33,16 @@ public class UserDao extends CrudDao<User> {
     }
 
     public User findByUserId(String userId) {
-        return findOne("{user_id: #}", userId).as(User.class);
+        return findOne("{_id: #}", userId).as(User.class);
     }
 
     public void deleteByUserId(String userId) {
-        delete("{user_id: #}", userId);
+        delete("{_id: #}", userId);
     }
 
     @Override
     public void update(User item) {
-        getCollection().update("{user_id: #}", item.getId()).with(item);
+        getCollection().update("{_id: #}", item.getId()).with(item);
     }
 
 

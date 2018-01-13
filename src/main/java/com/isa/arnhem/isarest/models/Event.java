@@ -4,28 +4,25 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.*;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = NormalEvent.class, include = JsonTypeInfo.As.PROPERTY, property = "event_type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME,   property = "event_type")
 @JsonSubTypes({
 
-        @JsonSubTypes.Type(value = ControlledEvent.class, name = "CONTROLLED"),
-        @JsonSubTypes.Type(value = NormalEvent.class, name = "NORMAL")
+       @JsonSubTypes.Type(value = ControlledEvent.class, name = "CONTROLLED"),
+      @JsonSubTypes.Type(value = NormalEvent.class, name = "NORMAL")
 })
 @Getter
 @Setter
 @EqualsAndHashCode(of = "id")
-public abstract class Event implements Comparable<Event> {
+public  abstract class Event implements Comparable<Event>, Identifiable {
 
-    @JsonProperty("event_id")
-    private final String id = UUID.randomUUID().toString();
+    private String id = UUID.randomUUID().toString();
 
     @JsonProperty("name")
     private String name;

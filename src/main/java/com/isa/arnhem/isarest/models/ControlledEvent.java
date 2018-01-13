@@ -3,6 +3,7 @@ package com.isa.arnhem.isarest.models;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -10,9 +11,9 @@ import java.util.List;
 @Setter
 public class ControlledEvent extends Event {
 
-    private UserType controlledBy;
+    private UserType controlledBy = UserType.MEMBER;
 
-    private List<Attendee> requestedAttendees;
+    private List<Attendee> requestedAttendees = new ArrayList<>();
 
 
 }

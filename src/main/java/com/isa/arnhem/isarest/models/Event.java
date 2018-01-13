@@ -4,8 +4,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -15,10 +19,13 @@ import java.util.*;
         @JsonSubTypes.Type(value = ControlledEvent.class, name = "CONTROLLED"),
         @JsonSubTypes.Type(value = NormalEvent.class, name = "NORMAL")
 })
+@Getter
+@Setter
+@EqualsAndHashCode(of = "id")
 public abstract class Event implements Comparable<Event> {
 
     @JsonProperty("event_id")
-    private final String id;
+    private final String id = UUID.randomUUID().toString();
 
     @JsonProperty("name")
     private String name;
@@ -41,88 +48,17 @@ public abstract class Event implements Comparable<Event> {
     @JsonProperty("properties")
     private Map<String, Object> properties = new HashMap<>();
 
-
-    public Event(String name, Description description) {
-        id = UUID.randomUUID().toString();
-        this.name = name;
-        this.description = description;
-    }
-
-    public Event() {
-        id = UUID.randomUUID().toString();
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Description getDescription() {
-        return description;
-    }
-
-    public void setDescription(Description description) {
-        this.description = description;
-    }
-
-
-    public String getMainImage() {
-        return mainImage;
-    }
-
-    public void setMainImage(String mainImage) {
-        this.mainImage = mainImage;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
-
-    public Map<String, Object> getProperties() {
-        return properties;
-    }
-
-    public void setProperties(Map<String, Object> properties) {
-        this.properties = properties;
-    }
-
-    public List<Attendee> getAttendees() {
-        return attendees;
-    }
-
-    public void setAttendees(List<Attendee> attendees) {
-        this.attendees = attendees;
-    }
-
-    public int getPriority() {
-        return priority;
-    }
-
-    public void setPriority(int priority) {
-        this.priority = priority;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Event event = (Event) o;
-        return Objects.equals(id, event.id);
-    }
+    @JsonProperty("date")
+    private ZonedDateTime date;
 
     @Override
     public int compareTo(Event o) {
-        return Integer.compare(this.getPriority(), o.getPriority());
+        int priorityCompare = Integer.compare(this.priority, o.priority);
+
+        if (priorityCompare == 0) {
+            return this.date.compareTo(o.date);
+        }
+
+        return priorityCompare;
     }
 }

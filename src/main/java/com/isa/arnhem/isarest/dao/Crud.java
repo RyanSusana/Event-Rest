@@ -3,6 +3,8 @@ package com.isa.arnhem.isarest.dao;
 import org.jongo.Find;
 import org.jongo.FindOne;
 
+import java.util.Collection;
+
 
 public interface Crud<T> {
 
@@ -29,6 +31,10 @@ public interface Crud<T> {
         for (T item : items) {
             update(item);
         }
+    }
+
+    default void create(Collection<T> items){
+        items.forEach(this::create);
     }
 
 

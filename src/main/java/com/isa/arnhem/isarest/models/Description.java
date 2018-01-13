@@ -1,22 +1,13 @@
 package com.isa.arnhem.isarest.models;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class Description {
 
-    private String extended, shortened;
+    private String extended;
+    private String shortened;
 
-    public String getExtended() {
-        return extended;
-    }
-
-    public void setExtended(String extended) {
-        this.extended = extended;
-    }
-
-    public String getShortened() {
-        return shortened;
-    }
-
-    public void setShortened(String shortened) {
-        this.shortened = shortened;
-    }
 }

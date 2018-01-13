@@ -1,19 +1,18 @@
 package com.isa.arnhem.isarest.models;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
 
+@Getter
+@Setter
 public class ControlledEvent extends Event {
 
+    private UserType controlledBy;
 
     private List<Attendee> requestedAttendees;
 
-    public List<Attendee> getRequestedAttendees() {
-        return requestedAttendees;
-    }
-
-    public void setRequestedAttendees(List<Attendee> requestedAttendees) {
-        this.requestedAttendees = requestedAttendees;
-    }
 
 }

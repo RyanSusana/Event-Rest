@@ -2,7 +2,6 @@ package com.isa.arnhem.isarest.dao;
 
 import org.jongo.Jongo;
 import org.jongo.MongoCollection;
-import org.springframework.context.annotation.PropertySource;
 
 
 public abstract class Dao {

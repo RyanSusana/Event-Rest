@@ -3,16 +3,20 @@ package com.isa.arnhem.isarest.models;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Objects;
 import java.util.UUID;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Getter
+@Setter
+@EqualsAndHashCode(of = "id")
 public class User {
 
 
@@ -28,14 +32,13 @@ public class User {
     @JsonProperty("full_name")
     private String fullName;
 
-
     @JsonProperty("type")
     private UserType type;
 
     @JsonProperty("creation_date")
     @JsonFormat
             (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm'Z'")
-    private final Date creationDate;
+    private Date creationDate;
 
     @JsonProperty("activated")
     private boolean activated;
@@ -43,7 +46,7 @@ public class User {
 
     public User() {
         this.creationDate = Calendar.getInstance().getTime();
-        id = UUID.randomUUID().toString();
+        this.id = UUID.randomUUID().toString();
     }
 
 
@@ -55,41 +58,7 @@ public class User {
         this.type = type;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public void setType(UserType type) {
-        this.type = type;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public UserType getType() {
-        return type;
-    }
 
     private String getSaltedPassword() {
         return this.id + password + this.password + this.id;
@@ -107,28 +76,13 @@ public class User {
         try {
             password = encrypt(getSaltedPassword());
         } catch (Exception e) {
+            e.printStackTrace();
         }
 
         return this;
     }
-    public boolean isActivated() {
-        return activated;
-    }
-
-    public void setActivated(boolean activated) {
-        this.activated = activated;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
 
     private static String encrypt(final String password) throws NoSuchAlgorithmException {
-
 
         final MessageDigest digest = MessageDigest.getInstance("MD5");
         final byte[] passwordBytes = password.getBytes();
@@ -137,26 +91,11 @@ public class User {
         digest.update(passwordBytes);
         final byte[] message = digest.digest();
 
-        final StringBuffer hexString = new StringBuffer();
-        for (int i = 0; i < message.length; i++) {
+        final StringBuilder hexString = new StringBuilder();
+        for (byte aMessage : message) {
             hexString.append(Integer.toHexString(
-                    0xFF & message[i]));
+                    0xFF & aMessage));
         }
         return hexString.toString();
-
     }
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        return Objects.equals(id, user.id);
-    }
-
-    @Override
-    public int hashCode() {
-
-        return Objects.hash(id);
-    }
-
 }

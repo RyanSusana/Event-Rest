@@ -1,8 +1,6 @@
 package com.isa.arnhem.isarest.dao;
 
 import com.isa.arnhem.isarest.models.Event;
-import com.isa.arnhem.isarest.models.User;
-import com.mongodb.MongoClient;
 import org.jongo.Jongo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;

@@ -35,6 +35,7 @@ public class User implements Identifiable{
     @JsonProperty("type")
     private UserType type;
 
+
     @JsonProperty("creation_date")
     @JsonFormat
             (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm'Z'")
@@ -43,6 +44,8 @@ public class User implements Identifiable{
     @JsonProperty("activated")
     private boolean activated;
 
+    @JsonProperty("banned")
+    private boolean banned = false;
 
     public User() {
         this.creationDate = Calendar.getInstance().getTime();
@@ -64,38 +67,5 @@ public class User implements Identifiable{
         return this.id + password + this.password + this.id;
     }
 
-    public boolean samePassword(String id, String password) {
-        try {
-            return (encrypt(id + password + password + id).equals(this.getPassword()));
-        } catch (NoSuchAlgorithmException e) {
-            return false;
-        }
-    }
 
-    public User secure() {
-        try {
-            password = encrypt(getSaltedPassword());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return this;
-    }
-
-    private static String encrypt(final String password) throws NoSuchAlgorithmException {
-
-        final MessageDigest digest = MessageDigest.getInstance("MD5");
-        final byte[] passwordBytes = password.getBytes();
-
-        digest.reset();
-        digest.update(passwordBytes);
-        final byte[] message = digest.digest();
-
-        final StringBuilder hexString = new StringBuilder();
-        for (byte aMessage : message) {
-            hexString.append(Integer.toHexString(
-                    0xFF & aMessage));
-        }
-        return hexString.toString();
-    }
 }

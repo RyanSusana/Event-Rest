@@ -1,10 +1,11 @@
 package com.isa.arnhem.isarest.repository;
 
+import com.isa.arnhem.isarest.models.Identifiable;
 import org.jongo.Find;
 import org.jongo.FindOne;
 import org.jongo.Jongo;
 
-public abstract class CrudDao<T> extends Dao implements Crud<T> {
+public abstract class CrudDao<T extends Identifiable> extends Dao implements Crud<T> {
     public CrudDao(Jongo jongo, String collectionName) {
         super(jongo, collectionName);
     }

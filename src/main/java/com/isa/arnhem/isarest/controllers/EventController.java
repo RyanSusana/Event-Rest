@@ -16,7 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping(path = "/api/events")
 @AllArgsConstructor(onConstructor = @__(@Autowired))
-public class EventController {
+public class EventController extends SecuredController {
 
     private final EventService eventService;
 
@@ -50,8 +50,11 @@ public class EventController {
     }
 
     @RequestMapping(path = "/{id}/attendees", method = RequestMethod.POST)
-    public ResponseEntity<ResponseMessage> addAttendee(@PathVariable("id") String eventId, @RequestParam String userId) {
-        return eventService.addUserToEvent(eventId, userId).toResponseEntity();
+    public ResponseEntity<ResponseMessage> addAttendee(@PathVariable("id") String eventId, @RequestParam String userId, @RequestParam Boolean controlled) {
+        if (controlled == null || !controlled) {
+            return eventService.addUserToEvent(eventId, userId).toResponseEntity();
+        }
+        return addUserToControlledEvent(eventId, userId, getLoggedInUser());
     }
 
     @RequestMapping(path = "/{id}/attendees", method = RequestMethod.DELETE)
@@ -61,9 +64,13 @@ public class EventController {
 
     @RequestMapping(path = "/{id}/attendees", method = RequestMethod.GET)
     public @ResponseBody
-    List<Attendee> getAttendees(@PathVariable("id") String eventId) {
+    AttendeeSet getAttendees(@PathVariable("id") String eventId) {
         Event event = eventService.getEventDao().findByEventId(eventId);
         return event.getAttendees();
+    }
+
+    public ResponseEntity<ResponseMessage> addUserToControlledEvent(String eventId, String userId, User controllerUser) {
+        return eventService.addUserToControlledEvent(eventId, userId, controllerUser).toResponseEntity();
     }
 
 

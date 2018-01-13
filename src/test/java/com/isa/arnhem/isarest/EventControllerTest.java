@@ -120,7 +120,7 @@ public class EventControllerTest extends BaseIntegrationTest {
         eventDao.create(testControlledEvent);
         initSize = 2;
 
-        User ryan = new User("Ryan", "ryansusana@live.co", "testword", UserType.MEMBER);
+        User ryan = new User("Ryan", "ryansusana@live.co", "testword", UserType.STUDENT);
 
         userDao.create(ryan);
         testSubject = userDao.findByUsername("Ryan");
@@ -148,7 +148,7 @@ public class EventControllerTest extends BaseIntegrationTest {
 
     @Test
     public void testAddUserToEvent() {
-        ResponseMessage message = eventController.addAttendee(testEvent.getId(), testSubject.getId()).getBody();
+        ResponseMessage message = eventController.addAttendee(testEvent.getId(), testSubject.getId(), false).getBody();
 
         Event updatedEvent = eventController.getEvent(testEvent.getId());
 
@@ -172,11 +172,31 @@ public class EventControllerTest extends BaseIntegrationTest {
 
     @Test
     public void testAddedToTheRequestedAttendeesListOnControlledEvent() {
-        ResponseMessage message = eventController.addAttendee(testControlledEvent.getId(), testSubject.getId()).getBody();
+        ResponseMessage message = eventController.addAttendee(testControlledEvent.getId(), testSubject.getId(),false).getBody();
 
         ControlledEvent updatedEvent =(ControlledEvent) eventController.getEvent(testControlledEvent.getId());
 
         assertEquals(0, updatedEvent.getAttendees().size());
         assertEquals(1, updatedEvent.getRequestedAttendees().size());
+    }
+    @Test
+    public void testNotAddedToTheAttendeesListOnControlledEventWithLowRankingUser() {
+        ResponseMessage message = eventController.addUserToControlledEvent(testControlledEvent.getId(),testSubject.getId(), testSubject).getBody();
+
+        ControlledEvent updatedEvent =(ControlledEvent) eventController.getEvent(testControlledEvent.getId());
+
+        assertEquals(0, updatedEvent.getAttendees().size());
+        assertEquals(ResponseMessageType.UNAUTHORIZED, message.getMessageType());
+    }
+    @Test
+    public void testAddedToTheAttendeesListOnControlledEventWithAppropriateRankingUser() {
+        testSubject.setType(UserType.ADMIN);
+        ResponseMessage message = eventController.addUserToControlledEvent(testControlledEvent.getId(),testSubject.getId(), testSubject).getBody();
+
+        ControlledEvent updatedEvent =(ControlledEvent) eventController.getEvent(testControlledEvent.getId());
+
+        assertEquals(1, updatedEvent.getAttendees().size());
+        assertEquals(0, updatedEvent.getRequestedAttendees().size());
+        assertEquals(ResponseMessageType.SUCCESSFUL, message.getMessageType());
     }
 }

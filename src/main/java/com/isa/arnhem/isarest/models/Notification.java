@@ -8,8 +8,9 @@ import java.time.ZonedDateTime;
 
 @Getter
 @Setter
-public class Notification implements Comparable<Notification> {
+public class Notification implements Comparable<Notification> , Identifiable{
 
+    private String id;
     private boolean seen = false;
 
     private String userId;

@@ -32,7 +32,9 @@ public class MongoConfiguration {
 
     @Bean
     public Jongo jongo() {
-        return new Jongo(mongoClient().getDB(databaseName), new JacksonMapper.Builder().withObjectIdUpdater(new CustomObjectIdUpdater(Mapping.defaultMapping().getObjectMapper())).build());
+        return new Jongo(mongoClient().getDB(databaseName), new JacksonMapper.Builder()
+                .withObjectIdUpdater(new CustomObjectIdUpdater(Mapping.defaultMapping().getObjectMapper()))
+                .build());
     }
 
 }

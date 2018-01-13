@@ -20,11 +20,11 @@ import java.util.regex.Pattern;
 @RestController
 @RequestMapping(path = "/api/users")
 @AllArgsConstructor(onConstructor = @__(@Autowired))
-public class UserController {
+public class UserController extends SecuredController{
 
     private final UserService userService;
 
-    @RequestMapping(path = "/", method = RequestMethod.GET)
+    @RequestMapping(path = "/secured/", method = RequestMethod.GET)
     public @ResponseBody
     List<User> getAll() {
         return Lists.newArrayList(userService.getUserDao().find().as(User.class).iterator());
@@ -59,11 +59,12 @@ public class UserController {
 
         user.setType(UserType.MEMBER);
         user.setActivated(false);
-        userService.getUserDao().create(user.secure());
+        user.setPassword(new IsaPasswordEncoder().encode(user.getPassword()));
+        userService.getUserDao().create(user);
         return ResponseMessage.builder().message("Created: " + user.getUsername()).messageType(ResponseMessageType.SUCCESSFUL).build().toResponseEntity();
         }
 
-    @RequestMapping(path = "/{id}", method = RequestMethod.GET)
+    @RequestMapping(path = "/secured/{id}", method = RequestMethod.GET)
     public @ResponseBody
     User getUser(@PathVariable("id") String id) {
         User user = userService.getUserDao().findByUserId(id);
@@ -99,23 +100,6 @@ public class UserController {
         } else {
             return new ResponseEntity<>(user.getUsername() + " is already activated!", HttpStatus.FORBIDDEN);
         }
-    }
-
-    @RequestMapping(path = "/login", method = RequestMethod.POST)
-    public ResponseEntity<String> login(@RequestParam(value = "usernameOrEmail", required = true) String usernameOrEmail, @RequestParam(value = "password", required = false) String password) {
-        User user;
-
-        user = userService.getUserDao().findByUsername(usernameOrEmail);
-        if (user == null) {
-            user = userService.getUserDao().findByEmail(usernameOrEmail);
-        }
-
-        if (user != null) {
-            if (user.samePassword(user.getId(), password)) {
-                return new ResponseEntity<>(user.getId(), HttpStatus.OK);
-            }
-        }
-        return new ResponseEntity<>("Invalid Username/Password!", HttpStatus.UNAUTHORIZED);
     }
 
     public String evaluateUsername(String username) {

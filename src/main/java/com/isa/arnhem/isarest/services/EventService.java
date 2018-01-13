@@ -32,6 +32,31 @@ public class EventService {
         if (user == null) {
             return ResponseMessage.builder().message("User doesn't exist!").messageType(ResponseMessageType.CLIENT_ERROR).build();
         }
+        return addUserToEvent(event, user);
+    }
+
+    public ResponseMessage removeUserFromEvent(String eventId, String userId) {
+        User user = userDao.findByUserId(userId);
+        Event event = eventDao.findByEventId(eventId);
+        if (event == null) {
+            return ResponseMessage.builder().message("Event doesn't exist!").messageType(ResponseMessageType.NOT_FOUND).build();
+        }
+        if (user == null) {
+            return ResponseMessage.builder().message("User doesn't exist!").messageType(ResponseMessageType.NOT_FOUND).build();
+        }
+        Attendee attendee = new Attendee(userId, Calendar.getInstance().getTime());
+
+        if (!event.getAttendees().contains(attendee)) {
+            return ResponseMessage.builder().message("Event is already not being attended by this user.").messageType(ResponseMessageType.CLIENT_ERROR).build();
+        }
+        event.getAttendees().remove(attendee);
+
+        eventDao.update(event);
+        return ResponseMessage.builder().message("Removed " + user.getUsername() + " from the event: " + event.getName()).messageType(ResponseMessageType.SUCCESSFUL).build();
+
+    }
+
+    private ResponseMessage addUserToEvent(Event event, User user) {
         final Attendee attendee = new Attendee(user.getId(), Calendar.getInstance().getTime());
 
         if (event.getAttendees().contains(attendee)) {
@@ -62,24 +87,34 @@ public class EventService {
         }
     }
 
-    public ResponseMessage removeUserFromEvent(String eventId, String userId){
-        User user = userDao.findByUserId(userId);
-        Event event = eventDao.findByEventId(eventId);
-        if (event == null) {
-            return ResponseMessage.builder().message("Event doesn't exist!").messageType(ResponseMessageType.NOT_FOUND).build();
+    public ResponseMessage addUserToControlledEvent(String eventId, String userId, final User controllerUser) {
+        final Event event = eventDao.findByEventId(eventId);
+        final User userToAdd = userDao.findByUserId(userId);
+        if (event.getAttendees().contains(new Attendee(userToAdd.getId(), null))) {
+            return ResponseMessage.builder().message("Event is already being attended by this user.").messageType(ResponseMessageType.CLIENT_ERROR).build();
         }
-        if (user == null) {
-            return ResponseMessage.builder().message("User doesn't exist!").messageType(ResponseMessageType.NOT_FOUND).build();
-        }
-        Attendee attendee = new Attendee(userId, Calendar.getInstance().getTime());
+        if (event instanceof ControlledEvent) {
+            ControlledEvent controlledEvent = (ControlledEvent) event;
+            if (controlledEvent.getControlledBy().equals(controllerUser.getType()) ||
+                    controlledEvent.getControlledBy().getRanksAbove().contains(controllerUser.getType())) {
+                Attendee attendee = controlledEvent.getRequestedAttendees().getAttendee(userToAdd);
 
-        if (!event.getAttendees().contains(attendee)) {
-            return ResponseMessage.builder().message("Event is already not being attended by this user.").messageType(ResponseMessageType.CLIENT_ERROR).build();
-        }
-        event.getAttendees().remove(attendee);
+                if (attendee == null) {
+                    attendee = new Attendee(userToAdd.getId(), Calendar.getInstance().getTime());
+                    controlledEvent.getAttendees().add(attendee);
+                } else {
+                    controlledEvent.getAttendees().add(attendee);
+                    controlledEvent.getRequestedAttendees().remove(attendee);
+                }
 
-        eventDao.update(event);
-        return ResponseMessage.builder().message("Removed " + user.getUsername() + " from the event: " + event.getName()).messageType(ResponseMessageType.SUCCESSFUL).build();
+                eventDao.update(controlledEvent);
+                return ResponseMessage.builder().messageType(ResponseMessageType.SUCCESSFUL).message("Added " + userToAdd.getUsername() + " to the event: " + event.getName()).build();
+
+            }
+            return ResponseMessage.builder().messageType(ResponseMessageType.UNAUTHORIZED).message("You are not allowed to permit users to this event!").build();
+        } else {
+            return addUserToEvent(event, userToAdd);
+        }
 
     }
 }

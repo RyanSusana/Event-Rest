@@ -1,12 +1,13 @@
 package com.isa.arnhem.isarest.repository;
 
+import com.isa.arnhem.isarest.models.Identifiable;
 import org.jongo.Find;
 import org.jongo.FindOne;
 
 import java.util.Collection;
 
 
-public interface Crud<T> {
+public interface Crud<T extends Identifiable> {
 
     void create(T... items);
     void delete(String query, Object... params);

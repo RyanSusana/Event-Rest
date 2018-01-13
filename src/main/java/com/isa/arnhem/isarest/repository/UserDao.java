@@ -28,6 +28,14 @@ public class UserDao extends CrudDao<User> {
         return Lists.newArrayList(find("{type: {$in:#}}}", ranksToCheck).as(User.class).iterator());
     }
 
+    public User findByUsernameOrEmail(String s) {
+        User user = findByUsername(s);
+        if (s == null) {
+            user = findByEmail(s);
+        }
+        return user;
+    }
+
     public User findByEmail(String email) {
         return findOne("{email: #}", email).as(User.class);
     }

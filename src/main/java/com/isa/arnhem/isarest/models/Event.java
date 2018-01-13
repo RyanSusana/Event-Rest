@@ -37,7 +37,7 @@ public  abstract class Event implements Comparable<Event>, Identifiable {
     private String mainImage;
 
     @JsonProperty("attendees")
-    private List<Attendee> attendees = new ArrayList<>();
+    private AttendeeSet attendees = new AttendeeSet();
 
     @JsonProperty("price")
     private BigDecimal price = new BigDecimal(0);

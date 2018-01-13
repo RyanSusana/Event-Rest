@@ -13,7 +13,7 @@ public class ControlledEvent extends Event {
 
     private UserType controlledBy = UserType.MEMBER;
 
-    private List<Attendee> requestedAttendees = new ArrayList<>();
+    private AttendeeSet requestedAttendees = new AttendeeSet();
 
 
 }

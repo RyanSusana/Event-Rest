@@ -25,7 +25,15 @@ public abstract class CrudDao<T extends Identifiable> extends Dao implements Cru
         getCollection().remove(query);
     }
 
+    @Override
+    public void delete(T item) {
+        getCollection().remove("{_id: #}", item.getId());
+    }
 
+    @Override
+    public void update(T item) {
+        getCollection().update("{_id: #}", item.getId()).with(item);
+    }
 
     @Override
     public Find find(String query) {

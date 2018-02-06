@@ -1,9 +1,9 @@
 package com.isa.arnhem.isarest.services;
 
+import com.isa.arnhem.isarest.models.*;
 import com.isa.arnhem.isarest.repository.EventDao;
 import com.isa.arnhem.isarest.repository.NotificationDao;
 import com.isa.arnhem.isarest.repository.UserDao;
-import com.isa.arnhem.isarest.models.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 @Service
@@ -23,8 +24,8 @@ public class EventService {
     private final NotificationDao notificationDao;
 
     public ResponseMessage addUserToEvent(final String eventId, final String userId) {
-        final User user = userDao.findByUserId(userId);
-        final Event event = eventDao.findByEventId(eventId);
+        final User user = userDao.findByUserId(userId).get();
+        final Event event = eventDao.findByEventId(eventId).get();
 
         if (event == null) {
             return ResponseMessage.builder().message("Event doesn't exist!").messageType(ResponseMessageType.CLIENT_ERROR).build();
@@ -36,8 +37,8 @@ public class EventService {
     }
 
     public ResponseMessage removeUserFromEvent(String eventId, String userId) {
-        User user = userDao.findByUserId(userId);
-        Event event = eventDao.findByEventId(eventId);
+        User user = userDao.findByUserId(userId).get();
+        Event event = eventDao.findByEventId(eventId).get();
         if (event == null) {
             return ResponseMessage.builder().message("Event doesn't exist!").messageType(ResponseMessageType.NOT_FOUND).build();
         }
@@ -62,7 +63,6 @@ public class EventService {
         if (event.getAttendees().contains(attendee)) {
             return ResponseMessage.builder().message("Event is already being attended by this user.").messageType(ResponseMessageType.CLIENT_ERROR).build();
         }
-
         if (event instanceof ControlledEvent) {
             final ControlledEvent controlledEvent = (ControlledEvent) (event);
             if (controlledEvent.getRequestedAttendees().contains(attendee)) {
@@ -78,7 +78,7 @@ public class EventService {
                 notification.setMessage(user.getUsername() + " has requested to join the event: " + controlledEvent.getName());
             });
             notificationDao.create(notifications);
-            return ResponseMessage.builder().message(user.getUsername() + " has requested to join the event: " + controlledEvent.getName()).messageType(ResponseMessageType.SUCCESSFUL).build();
+            return ResponseMessage.builder().message(user.getUsername() + " has requested to join the event: " + controlledEvent.getName()).messageType(ResponseMessageType.ACCEPTED).build();
         } else {
             event.getAttendees().add(attendee);
             eventDao.update(event);
@@ -87,20 +87,29 @@ public class EventService {
         }
     }
 
-    public ResponseMessage addUserToControlledEvent(String eventId, String userId, final User controllerUser) {
-        final Event event = eventDao.findByEventId(eventId);
-        final User userToAdd = userDao.findByUserId(userId);
-        if (event.getAttendees().contains(new Attendee(userToAdd.getId(), null))) {
+    public ResponseMessage addUserToControlledEvent(String eventId, String userId, final Optional<User> controllerUser) {
+
+        final Optional<Event> event = eventDao.findByEventId(eventId);
+        final Optional<User> userToAdd = userDao.findByUserId(userId);
+        if (!event.isPresent() || !userToAdd.isPresent()) {
+            return ResponseMessage.builder().message("Event or User doesn't exist!").messageType(ResponseMessageType.CLIENT_ERROR).build();
+        }
+        if (!controllerUser.isPresent()) {
+            return ResponseMessage.builder().message("You must be logged in to use this function!").messageType(ResponseMessageType.CLIENT_ERROR).build();
+
+        }
+
+        if (event.get().getAttendees().contains(new Attendee(userToAdd.get().getId(), null))) {
             return ResponseMessage.builder().message("Event is already being attended by this user.").messageType(ResponseMessageType.CLIENT_ERROR).build();
         }
-        if (event instanceof ControlledEvent) {
-            ControlledEvent controlledEvent = (ControlledEvent) event;
-            if (controlledEvent.getControlledBy().equals(controllerUser.getType()) ||
-                    controlledEvent.getControlledBy().getRanksAbove().contains(controllerUser.getType())) {
-                Attendee attendee = controlledEvent.getRequestedAttendees().getAttendee(userToAdd);
+        if (event.get() instanceof ControlledEvent) {
+            ControlledEvent controlledEvent = (ControlledEvent) event.get();
+            if (controlledEvent.getControlledBy().equals(controllerUser.get().getType()) ||
+                    controlledEvent.getControlledBy().getRanksAbove().contains(controllerUser.get().getType())) {
+                Attendee attendee = controlledEvent.getRequestedAttendees().getAttendee(userToAdd.get());
 
                 if (attendee == null) {
-                    attendee = new Attendee(userToAdd.getId(), Calendar.getInstance().getTime());
+                    attendee = new Attendee(userToAdd.get().getId(), Calendar.getInstance().getTime());
                     controlledEvent.getAttendees().add(attendee);
                 } else {
                     controlledEvent.getAttendees().add(attendee);
@@ -108,12 +117,12 @@ public class EventService {
                 }
 
                 eventDao.update(controlledEvent);
-                return ResponseMessage.builder().messageType(ResponseMessageType.SUCCESSFUL).message("Added " + userToAdd.getUsername() + " to the event: " + event.getName()).build();
+                return ResponseMessage.builder().messageType(ResponseMessageType.ACCEPTED).message(userToAdd.get().getUsername() + " is now attending the event: " + event.get().getName()).build();
 
             }
             return ResponseMessage.builder().messageType(ResponseMessageType.UNAUTHORIZED).message("You are not allowed to permit users to this event!").build();
         } else {
-            return addUserToEvent(event, userToAdd);
+            return addUserToEvent(event.get(), userToAdd.get());
         }
 
     }

@@ -5,6 +5,8 @@ import org.jongo.Jongo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public class EventDao extends CrudDao<Event> {
 
@@ -13,8 +15,8 @@ public class EventDao extends CrudDao<Event> {
         super(jongo, "events");
     }
 
-    public Event findByEventId(String eventId) {
-        return findOne("{_id: #}", eventId).as(Event.class);
+    public Optional<Event> findByEventId(String eventId) {
+        return Optional.ofNullable(findOne("{_id: #}", eventId).as(Event.class));
     }
 
     @Override

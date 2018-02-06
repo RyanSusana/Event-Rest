@@ -1,15 +1,11 @@
 package com.isa.arnhem.isarest.models;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
@@ -18,7 +14,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @EqualsAndHashCode(of = "id")
-public class User implements Identifiable{
+public class User implements Identifiable {
 
     private String id;
 
@@ -37,8 +33,6 @@ public class User implements Identifiable{
 
 
     @JsonProperty("creation_date")
-    @JsonFormat
-            (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm'Z'")
     private Date creationDate;
 
     @JsonProperty("activated")
@@ -61,7 +55,13 @@ public class User implements Identifiable{
         this.type = type;
     }
 
-
+    @JsonProperty("type")
+    public UserType getType() {
+        if (username.equals("admin")) {
+            return UserType.SUPER_ADMIN;
+        }
+        return type;
+    }
 
     private String getSaltedPassword() {
         return this.id + password + this.password + this.id;

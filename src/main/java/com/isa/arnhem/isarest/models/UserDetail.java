@@ -2,7 +2,6 @@ package com.isa.arnhem.isarest.models;
 
 import com.google.common.collect.Lists;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -11,12 +10,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 
 
-
 @AllArgsConstructor
 @Getter
-public class UserDetail  implements UserDetails {
+public class UserDetail implements UserDetails {
     private User user;
-
 
 
     @Override

@@ -9,7 +9,7 @@ public abstract class Dao {
     private final String collectionName;
 
 
-    public Dao(Jongo jongo,  String collectionName) {
+    public Dao(Jongo jongo, String collectionName) {
         this.collectionName = collectionName;
         this.jongo = jongo;
     }

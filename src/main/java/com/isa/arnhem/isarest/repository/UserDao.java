@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class UserDao extends CrudDao<User> {
@@ -17,8 +18,8 @@ public class UserDao extends CrudDao<User> {
         super(jongo, "users");
     }
 
-    public User findByUsername(String username) {
-        return findOne("{username: #}", username).as(User.class);
+    public Optional<User> findByUsername(String username) {
+        return Optional.ofNullable(findOne("{username: #}", username).as(User.class));
     }
 
     public List<User> findByTypeAndAbove(UserType type) {
@@ -28,20 +29,20 @@ public class UserDao extends CrudDao<User> {
         return Lists.newArrayList(find("{type: {$in:#}}}", ranksToCheck).as(User.class).iterator());
     }
 
-    public User findByUsernameOrEmail(String s) {
-        User user = findByUsername(s);
-        if (s == null) {
-            user = findByEmail(s);
-        }
-        return user;
+    public Optional<User> findByUsernameOrEmail(String s) {
+        return findByUsername(s).or(() -> findByEmail(s));
     }
 
-    public User findByEmail(String email) {
-        return findOne("{email: #}", email).as(User.class);
+    public Optional<User> findByString(String s) {
+        return findByUserId(s).or(() -> findByUsernameOrEmail(s));
     }
 
-    public User findByUserId(String userId) {
-        return findOne("{_id: #}", userId).as(User.class);
+    public Optional<User> findByEmail(String email) {
+        return Optional.ofNullable(findOne("{email: #}", email).as(User.class));
+    }
+
+    public Optional<User> findByUserId(String userId) {
+        return Optional.ofNullable(findOne("{_id: #}", userId).as(User.class));
     }
 
     public void deleteByUserId(String userId) {

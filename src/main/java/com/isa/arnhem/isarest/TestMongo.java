@@ -2,66 +2,66 @@ package com.isa.arnhem.isarest;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.isa.arnhem.isarest.models.*;
-import com.isa.arnhem.isarest.repository.EventDao;
-import com.isa.arnhem.isarest.repository.UserDao;
-import com.isa.arnhem.isarest.repository.serialization.CustomObjectIdUpdater;
-import com.mashape.unirest.http.HttpResponse;
+import com.isa.arnhem.isarest.models.ControlledEvent;
+import com.isa.arnhem.isarest.models.Description;
+import com.isa.arnhem.isarest.models.UserType;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
-import com.mongodb.DB;
-import com.mongodb.MongoClient;
-import org.jongo.Jongo;
-import org.jongo.marshall.jackson.JacksonMapper;
-import org.jongo.marshall.jackson.configuration.Mapping;
-import org.simplejavamail.email.Email;
-import org.simplejavamail.email.EmailBuilder;
-import org.simplejavamail.mailer.Mailer;
-import org.simplejavamail.mailer.MailerBuilder;
-import org.simplejavamail.mailer.config.TransportStrategy;
 
-import java.util.UUID;
-
-import static javax.mail.Message.RecipientType.BCC;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 
 public class TestMongo {
 
     public static void main(String[] args) throws UnirestException, JsonProcessingException {
 
 
-
 //        User user = new User("Ryan","ryansusana@live.com","Susana",UserType.MEMBER);
 //        user.setPassword(new IsaPasswordEncoder().encode(user.getPassword()));
 //        new UserDao(new Jongo(new MongoClient().getDB("isa-rest"), new JacksonMapper.Builder().withObjectIdUpdater(new CustomObjectIdUpdater(Mapping.defaultMapping().getObjectMapper())).build()))
 //                .create(user);
-        NormalEvent testEvent = new NormalEvent();
-        testEvent.setName("ISA Prague City Trip 2017 TEST EVENT: Another one");
+        ControlledEvent testEvent = new ControlledEvent();
+        testEvent.setControlledBy(UserType.ISA_ADMIN);
+        testEvent.setName("Valentine's Party 2018");
+        testEvent.setDate(Date.from(LocalDateTime.of(2018, 2, 8, 23, 0).atZone(ZoneId.systemDefault()).toInstant()));
+
         testEvent.setDescription(new Description() {{
-            setShortened("Roadtrips, sightseeing, meeting and bonding with new people, drinks, dancing, laughter and lot's of fun guaranteed... It's definitely time for a trip, and this time, ISA wants to go with you to the gorgeous city of Prague! ");
-            setExtended("Who's ready for an adventure? Been thinking of visiting a beautiful city in Europe?\n" +
+            setShortened("Open yourself up to the new adventures of love! \n" +
+                    "If you still don’t feel the atmosphere of upcoming Valentine’s Day, this is your turn. Make this day special joining us on Valentine’s Party. Don’t forget to finally show your feelings and invite your lovely one.");
+            setExtended("Hello beautiful people! ♡\n" +
                     "\n" +
-                    "Roadtrips, sightseeing, meeting and bonding with new people, drinks, dancing, laughter and lot's of fun guaranteed... It's definitely time for a trip, and this time, ISA wants to go with you to the gorgeous city of Prague! \n" +
+                    "Open yourself up to the new adventures of love! \n" +
+                    "If you still don’t feel the atmosphere of upcoming Valentine’s Day, this is your turn. Make this day special joining us on Valentine’s Party. Don’t forget to finally show your feelings and invite your lovely one. \n" +
                     "\n" +
-                    "Interested? Keep reading!\n" +
+                    "Place – Loft (Korenmarkt Arnhem)\n" +
+                    "Time – 23:00-4:00\n" +
+                    "2nd floor opens at 00:00\n" +
+                    "Price – 3€\n" +
+                    "Dj Da Phonk\n" +
                     "\n" +
-                    "Date: From 28th September to 1st October 2017\n" +
+                    "*Specials*\n" +
+                    "Tequila and Sambuca shots - 1,50€ \n" +
+                    "Free Loft shots every hour \uD83D\uDE0F\n" +
+                    "DRUNK MAILBOX!!! -> leave your love declarations in the party mailbox! :) \n" +
                     "\n" +
-                    "What's covered in the Price:\n" +
-                    "-Transportation via Bus to go and return\n" +
-                    "-Hotel accomodation\n" +
-                    "-Prague Castle\n" +
-                    "-Tons of fun and an unforgettable experience \n" +
+                    "It's a party for sharing your love and making new connections! See you there!\n" +
                     "\n" +
-                    "Tickets: -Early Birds 110 EUR\n" +
-                    "-Regular 125 EUR\n" +
-                    "\n" +
-                    "NOTE: Passport or valid Travel ID required!!! The bus will leave Arnhem on Thursday evening, and will return from Praque on Sunday evening. Bus ride is appoximately 8 hrs duration.");
+                    "Your ISA_MEMBER \n" +
+                    "Xoxo ♡");
         }});
 
-        testEvent.setMainImage("https://scontent-ams3-1.xx.fbcdn.net/v/t31.0-8/22829559_1513570975426705_6457539393562076279_o.jpg?oh=9cc4dc4417edcdea3c02ab4b1ce7b0ef&oe=5AEEFB57");
-new EventDao(new Jongo(new MongoClient().getDB("isa-rest"), new JacksonMapper.Builder().withObjectIdUpdater(new CustomObjectIdUpdater(Mapping.defaultMapping().getObjectMapper())).build())).create(testEvent);
+        testEvent.setMainImage("https://scontent-ams3-1.xx.fbcdn.net/v/t1.0-9/27752252_1617262058390929_8968619853578726371_n.jpg?oh=3fefee798a6463b198852e8efebcca30&oe=5B15B5D4");
+//new EventDao(new Jongo(new MongoClient().getDB("isa-rest"), new JacksonMapper.Builder().withObjectIdUpdater(new CustomObjectIdUpdater(Mapping.defaultMapping().getObjectMapper())).build())).create(testEvent);
 
+        System.out.println(Unirest.post("http://185.56.146.48:8086/api/events/").header("Content-Type", "application/json").body(new ObjectMapper().writeValueAsString(testEvent)).asString().getBody());
+
+
+//        UserDao ud = new UserDao(new Jongo(new MongoClient().getDB("isa-rest"), new JacksonMapper.Builder().withObjectIdUpdater(new CustomObjectIdUpdater(Mapping.defaultMapping().getObjectMapper())).build()));
+//        User ryan = ud.findByUsername("Ryan").get();
+//
+//        ryan.setType(UserType.ISA_ADMIN);
+//
+//        ud.update(ryan);
     }
 }

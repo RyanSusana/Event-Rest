@@ -5,12 +5,12 @@ import com.google.common.collect.Lists;
 import com.isa.arnhem.isarest.models.*;
 import com.isa.arnhem.isarest.services.UserService;
 import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -20,9 +20,11 @@ import java.util.regex.Pattern;
 @RestController
 @RequestMapping(path = "/api/users")
 @AllArgsConstructor(onConstructor = @__(@Autowired))
-public class UserController extends SecuredController{
+public class UserController extends SecuredController {
 
     private final UserService userService;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @RequestMapping(path = "/secured/", method = RequestMethod.GET)
     public @ResponseBody
@@ -39,13 +41,14 @@ public class UserController extends SecuredController{
         if (evaluatedUsername != null) {
             return ResponseMessage.builder().message(evaluatedUsername).messageType(ResponseMessageType.CLIENT_ERROR).build().toResponseEntity();
         }
-        if (userService.getUserDao().findByUsername(user.getUsername()) != null) {
+
+        if (userService.getUserDao().findByUsername(user.getUsername()).isPresent()) {
             return ResponseMessage.builder().message("This username already taken!").messageType(ResponseMessageType.CLIENT_ERROR).build().toResponseEntity();
         }
         if (!EmailValidator.getInstance().isValid(user.getEmail())) {
             return ResponseMessage.builder().message("This is an invalid email!").messageType(ResponseMessageType.CLIENT_ERROR).build().toResponseEntity();
         }
-        if (userService.getUserDao().findByEmail(user.getEmail()) != null) {
+        if (userService.getUserDao().findByEmail(user.getEmail()).isPresent()) {
             return ResponseMessage.builder().message("This e-mail address is already in use!").messageType(ResponseMessageType.CLIENT_ERROR).build().toResponseEntity();
 
         }
@@ -57,39 +60,93 @@ public class UserController extends SecuredController{
 
         }
 
-        user.setType(UserType.MEMBER);
+        user.setType(UserType.STUDENT);
         user.setActivated(false);
-        user.setPassword(new IsaPasswordEncoder().encode(user.getPassword()));
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         userService.getUserDao().create(user);
         return ResponseMessage.builder().message("Created: " + user.getUsername()).messageType(ResponseMessageType.SUCCESSFUL).build().toResponseEntity();
-        }
+    }
 
-    @RequestMapping(path = "/secured/{id}", method = RequestMethod.GET)
+    @RequestMapping(path = "/secured/self", method = RequestMethod.POST)
+    public @ResponseBody
+    User getSelfUser() {
+
+
+        User user = getLoggedInUser().get();
+        user.setPassword(null);
+        return user;
+    }
+
+    @RequestMapping(path = "/{id}/rank", method = RequestMethod.POST)
+    public ResponseEntity<ResponseMessage> updateRank(@PathVariable("id") String userId, @RequestParam("rank") String rank) {
+        final Optional<UserType> rankToUpdateTo = UserType.getRank(rank);
+        final Optional<User> userToUpdate = userService.getUserDao().findByString(userId);
+        final Optional<User> loggedInUser = getLoggedInUser();
+
+        if (!userToUpdate.isPresent()) {
+            return ResponseMessage.builder().messageType(ResponseMessageType.CLIENT_ERROR).message("User doesn't exist!").build().toResponseEntity();
+        }
+        if (loggedInUser.isPresent() && loggedInUser.get().getType().hasEqualRightsTo(UserType.ISA_MEMBER)) {
+            if (userToUpdate.get().getType().hasMoreRightsThan(loggedInUser.get().getType())) {
+                return ResponseMessage.builder().messageType(ResponseMessageType.UNAUTHORIZED).message("The user you are trying to update has a higher ranking than you!").build().toResponseEntity();
+            }
+            if (rankToUpdateTo.isPresent() && loggedInUser.get().getType().hasMoreRightsThan(rankToUpdateTo.get())) {
+
+                userToUpdate.get().setType(rankToUpdateTo.get());
+                userService.getUserDao().update(userToUpdate.get());
+                return ResponseMessage.builder().messageType(ResponseMessageType.SUCCESSFUL).message("Succesfully updated users rank!").build().toResponseEntity();
+            } else {
+                List<UserType> ranksAllowed = loggedInUser.get().getType().getRanksBelow();
+
+                StringBuilder stringBuilder = new StringBuilder();
+                ranksAllowed.forEach((userType -> stringBuilder.append(userType.name() + ", ")));
+                String ranksAllowedString = stringBuilder.toString().trim();
+
+                ranksAllowedString = ranksAllowedString.substring(0, ranksAllowedString.length() - 1);
+                return ResponseMessage.builder().messageType(ResponseMessageType.CLIENT_ERROR).message(String.format("Unable to update rank using using '%s' available ranks are[%s]", rank, ranksAllowedString)).build().toResponseEntity();
+            }
+        } else {
+            return ResponseMessage.builder().messageType(ResponseMessageType.UNAUTHORIZED).message("You must be logged in as an ISA_MEMBER member(atleast) to promote/demote users.").build().toResponseEntity();
+
+        }
+    }
+
+
+    @RequestMapping(path = "/find/{id}", method = RequestMethod.GET)
     public @ResponseBody
     User getUser(@PathVariable("id") String id) {
-        User user = userService.getUserDao().findByUserId(id);
+        User user = userService.getUserDao().findByString(id).get();
+
         user.setPassword(null);
         return user;
     }
 
     @RequestMapping(path = "/{id}/events", method = RequestMethod.GET)
     public @ResponseBody
-    List<Event> getUserSignUps(@PathVariable("id") String id) {
+    Map<String, Set<Event>> getUserSignUps(@PathVariable("id") String id) {
 
-        List<Event> events = new ArrayList<>();
-
-        Lists.newArrayList(userService.getEventDao().find("{'attendees.user_id': #}", id)
-                .projection("{event_id: 1, price: 1, name: 1, main_image: 1}")
-                .as(Event.class).iterator())
-                .forEach(events::add);
+        Set<Event> events = new TreeSet<>();
 
 
-        return events;
+        userService.getEventDao().find("{'attendees.user_id': #}", id)
+                .projection("{_id: 1, price: 1, name: 1, main_image: 1, event_type: 1, date: 1}")
+                .as(Event.class).iterator().forEachRemaining(events::add);
+
+        Set<Event> requestedEvents = new TreeSet<>();
+
+        userService.getEventDao().find("{'requested_attendees.user_id': #}", id)
+                .projection("{_id: 1, price: 1, name: 1, main_image: 1, event_type: 1, date: 1}")
+                .as(Event.class).iterator().forEachRemaining(requestedEvents::add);
+
+        Map<String, Set<Event>> eventMap = new HashMap<>();
+        eventMap.put("attending_events", events);
+        eventMap.put("requested_events", requestedEvents);
+        return eventMap;
     }
 
     @RequestMapping(path = "/activate/{id}", method = RequestMethod.GET)
     public ResponseEntity<String> activateUser(@PathVariable("id") String id) {
-        User user = userService.getUserDao().findByUserId(id);
+        User user = userService.getUserDao().findByUserId(id).get();
         if (user == null) {
             return new ResponseEntity<>("Cannot find user with id: " + id, HttpStatus.NOT_FOUND);
         }
@@ -102,9 +159,14 @@ public class UserController extends SecuredController{
         }
     }
 
+    @RequestMapping(path = "/logout", method = RequestMethod.GET)
+    public void logOut() {
+        logout();
+    }
+
     public String evaluateUsername(String username) {
 
-        if(username.startsWith(".")|| username.endsWith(".")){
+        if (username.startsWith(".") || username.endsWith(".")) {
             return "Username can't begin or end with a dot!";
         }
         if (username == null || username.isEmpty()) {

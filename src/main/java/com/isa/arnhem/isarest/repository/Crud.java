@@ -10,14 +10,21 @@ import java.util.Collection;
 public interface Crud<T extends Identifiable> {
 
     void create(T... items);
+
     void delete(String query, Object... params);
+
     void delete(String query);
+
+    void delete(T item);
 
     void update(T item);
 
     Find find(String query);
+
     Find find(String query, Object... params);
+
     FindOne findOne(String query);
+
     FindOne findOne(String query, Object... params);
 
     default Find find() {
@@ -34,7 +41,7 @@ public interface Crud<T extends Identifiable> {
         }
     }
 
-    default void create(Collection<T> items){
+    default void create(Collection<T> items) {
         items.forEach(this::create);
     }
 

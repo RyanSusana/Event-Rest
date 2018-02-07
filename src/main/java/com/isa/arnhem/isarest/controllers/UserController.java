@@ -1,7 +1,7 @@
 package com.isa.arnhem.isarest.controllers;
 
 
-import com.google.common.collect.Lists;
+import com.isa.arnhem.isarest.dto.AttendedEventDTO;
 import com.isa.arnhem.isarest.models.*;
 import com.isa.arnhem.isarest.services.UserService;
 import lombok.AllArgsConstructor;
@@ -29,13 +29,39 @@ public class UserController extends SecuredController {
     @RequestMapping(path = "/secured/", method = RequestMethod.GET)
     public @ResponseBody
     List<User> getAll() {
-        return Lists.newArrayList(userService.getUserDao().find().as(User.class).iterator());
+        return userService.getUserDao().getAll();
+    }
+
+    @GetMapping()
+    Collection<User> getAllUsers(@RequestParam(value = "q", required = false) String q, @RequestParam(value = "limit", required = false) Integer l) {
+        Optional<String> searchTerm = Optional.ofNullable(q);
+        Optional<Integer> limit = Optional.ofNullable(l);
+        final Collection<User> result;
+        if (searchTerm.isPresent()) {
+            result = userService.getUserDao().search(searchTerm.get());
+        } else {
+            result = userService.getUserDao().getAll();
+        }
+        if (limit.isPresent()) {
+            List<User> newResult = new ArrayList<>();
+            int current = 0;
+            for (User user : result) {
+                if (current >= limit.get()) {
+                    break;
+                }
+                newResult.add(user);
+                current++;
+            }
+            return newResult;
+
+
+        } else {
+            return result;
+        }
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ResponseMessage> addUser(@RequestBody User user) {
-
-
         final String evaluatedUsername = evaluateUsername(user.getUsername());
 
         if (evaluatedUsername != null) {
@@ -77,6 +103,20 @@ public class UserController extends SecuredController {
         return user;
     }
 
+    public @ResponseBody
+    @RequestMapping(path = "/allowed-ranks", method = RequestMethod.GET)
+    Iterable<UserType> getRanks() {
+        final Optional<User> loggedInUser = getLoggedInUser();
+
+        if (loggedInUser.isPresent() && loggedInUser.get().isAuthorative()) {
+            return loggedInUser.get().getType().getRanksBelow();
+
+        }
+        return new ArrayList<>();
+
+
+    }
+
     @RequestMapping(path = "/{id}/rank", method = RequestMethod.POST)
     public ResponseEntity<ResponseMessage> updateRank(@PathVariable("id") String userId, @RequestParam("rank") String rank) {
         final Optional<UserType> rankToUpdateTo = UserType.getRank(rank);
@@ -87,14 +127,20 @@ public class UserController extends SecuredController {
             return ResponseMessage.builder().messageType(ResponseMessageType.CLIENT_ERROR).message("User doesn't exist!").build().toResponseEntity();
         }
         if (loggedInUser.isPresent() && loggedInUser.get().getType().hasEqualRightsTo(UserType.ISA_MEMBER)) {
+            if (userToUpdate.get().equals(loggedInUser.get())) {
+                return ResponseMessage.builder().messageType(ResponseMessageType.UNAUTHORIZED).message("You can't update your own rank!").build().toResponseEntity();
+
+            }
             if (userToUpdate.get().getType().hasMoreRightsThan(loggedInUser.get().getType())) {
-                return ResponseMessage.builder().messageType(ResponseMessageType.UNAUTHORIZED).message("The user you are trying to update has a higher ranking than you!").build().toResponseEntity();
+                return ResponseMessage.builder().messageType(ResponseMessageType.UNAUTHORIZED).message("The user you are trying to update has a similar or higher ranking than you!").build().toResponseEntity();
             }
             if (rankToUpdateTo.isPresent() && loggedInUser.get().getType().hasMoreRightsThan(rankToUpdateTo.get())) {
-
+                if (userToUpdate.get().getType().equals(rankToUpdateTo.get())) {
+                    return ResponseMessage.builder().messageType(ResponseMessageType.CLIENT_ERROR).message("User already has this rank!").build().toResponseEntity();
+                }
                 userToUpdate.get().setType(rankToUpdateTo.get());
                 userService.getUserDao().update(userToUpdate.get());
-                return ResponseMessage.builder().messageType(ResponseMessageType.SUCCESSFUL).message("Succesfully updated users rank!").build().toResponseEntity();
+                return ResponseMessage.builder().messageType(ResponseMessageType.ACCEPTED).message("Succesfully updated users rank!").build().toResponseEntity();
             } else {
                 List<UserType> ranksAllowed = loggedInUser.get().getType().getRanksBelow();
 
@@ -123,24 +169,28 @@ public class UserController extends SecuredController {
 
     @RequestMapping(path = "/{id}/events", method = RequestMethod.GET)
     public @ResponseBody
-    Map<String, Set<Event>> getUserSignUps(@PathVariable("id") String id) {
+    Map<String, Set<AttendedEventDTO>> getUserSignUps(@PathVariable("id") String id) {
 
-        Set<Event> events = new TreeSet<>();
+        TreeSet<AttendedEventDTO> events = new TreeSet<>();
 
 
-        userService.getEventDao().find("{'attendees.user_id': #}", id)
-                .projection("{_id: 1, price: 1, name: 1, main_image: 1, event_type: 1, date: 1}")
-                .as(Event.class).iterator().forEachRemaining(events::add);
+        EventSet.of(userService.getEventDao().find("{'attendees.user_id': #}", id)
+                .projection("{_id: 1, price: 1, name: 1, main_image: 1, event_type: 1, date: 1, attendees: 1}")
+                .as(Event.class)).filterOutPastEvents().forEach((event -> {
+            events.add(new AttendedEventDTO(event, id, false));
+        }));
 
-        Set<Event> requestedEvents = new TreeSet<>();
+        TreeSet<AttendedEventDTO> requestedEvents = new TreeSet<>();
 
-        userService.getEventDao().find("{'requested_attendees.user_id': #}", id)
-                .projection("{_id: 1, price: 1, name: 1, main_image: 1, event_type: 1, date: 1}")
-                .as(Event.class).iterator().forEachRemaining(requestedEvents::add);
+        EventSet.of(userService.getEventDao().find("{'requested_attendees.user_id': #}", id)
+                .projection("{_id: 1, price: 1, name: 1, main_image: 1, event_type: 1, date: 1, requested_attendees: 1}")
+                .as(Event.class)).filterOutPastEvents().forEach((event -> {
+            requestedEvents.add(new AttendedEventDTO(event, id, true));
+        }));
 
-        Map<String, Set<Event>> eventMap = new HashMap<>();
-        eventMap.put("attending_events", events);
-        eventMap.put("requested_events", requestedEvents);
+        Map<String, Set<AttendedEventDTO>> eventMap = new HashMap<>();
+        eventMap.put("attending_events", events.descendingSet());
+        eventMap.put("requested_events", requestedEvents.descendingSet());
         return eventMap;
     }
 

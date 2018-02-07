@@ -2,6 +2,7 @@ package com.isa.arnhem.isarest.models;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,6 +30,7 @@ public class User implements Identifiable {
     private String fullName;
 
     @JsonProperty("type")
+    @JsonDeserialize(using = UserTypeDeserializer.class)
     private UserType type;
 
 
@@ -63,8 +65,9 @@ public class User implements Identifiable {
         return type;
     }
 
-    private String getSaltedPassword() {
-        return this.id + password + this.password + this.id;
+    @JsonProperty("authorative")
+    public boolean isAuthorative(){
+        return getType().hasEqualRightsTo(UserType.ISA_MEMBER);
     }
 
 

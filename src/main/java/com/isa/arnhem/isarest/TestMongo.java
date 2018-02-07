@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isa.arnhem.isarest.models.ControlledEvent;
 import com.isa.arnhem.isarest.models.Description;
+import com.isa.arnhem.isarest.models.NormalEvent;
 import com.isa.arnhem.isarest.models.UserType;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
@@ -21,10 +22,10 @@ public class TestMongo {
 //        user.setPassword(new IsaPasswordEncoder().encode(user.getPassword()));
 //        new UserDao(new Jongo(new MongoClient().getDB("isa-rest"), new JacksonMapper.Builder().withObjectIdUpdater(new CustomObjectIdUpdater(Mapping.defaultMapping().getObjectMapper())).build()))
 //                .create(user);
-        ControlledEvent testEvent = new ControlledEvent();
-        testEvent.setControlledBy(UserType.ISA_ADMIN);
-        testEvent.setName("Valentine's Party 2018");
-        testEvent.setDate(Date.from(LocalDateTime.of(2018, 2, 8, 23, 0).atZone(ZoneId.systemDefault()).toInstant()));
+        NormalEvent testEvent = new NormalEvent();
+        //testEvent.setControlledBy(UserType.ISA_ADMIN);
+        testEvent.setName("Valentine's Party 2020");
+        testEvent.setDate(Date.from(LocalDateTime.of(2020, 2, 8, 23, 0).atZone(ZoneId.systemDefault()).toInstant()));
 
         testEvent.setDescription(new Description() {{
             setShortened("Open yourself up to the new adventures of love! \n" +
@@ -51,10 +52,10 @@ public class TestMongo {
                     "Xoxo ♡");
         }});
 
-        testEvent.setMainImage("https://scontent-ams3-1.xx.fbcdn.net/v/t1.0-9/27752252_1617262058390929_8968619853578726371_n.jpg?oh=3fefee798a6463b198852e8efebcca30&oe=5B15B5D4");
+        testEvent.setMainImage("http://www.jimmyvalentineslhc.com/wp-content/uploads/2015/03/IMG_9229-1000x600.jpg");
 //new EventDao(new Jongo(new MongoClient().getDB("isa-rest"), new JacksonMapper.Builder().withObjectIdUpdater(new CustomObjectIdUpdater(Mapping.defaultMapping().getObjectMapper())).build())).create(testEvent);
 
-        System.out.println(Unirest.post("http://185.56.146.48:8086/api/events/").header("Content-Type", "application/json").body(new ObjectMapper().writeValueAsString(testEvent)).asString().getBody());
+        System.out.println(Unirest.post("http://localhost:8086/api/events/").header("Content-Type", "application/json").basicAuth("admin","Susana").body(new ObjectMapper().writeValueAsString(testEvent)).asString().getBody());
 
 
 //        UserDao ud = new UserDao(new Jongo(new MongoClient().getDB("isa-rest"), new JacksonMapper.Builder().withObjectIdUpdater(new CustomObjectIdUpdater(Mapping.defaultMapping().getObjectMapper())).build()));

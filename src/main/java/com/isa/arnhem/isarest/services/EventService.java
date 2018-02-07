@@ -24,7 +24,7 @@ public class EventService {
     private final NotificationDao notificationDao;
 
     public ResponseMessage addUserToEvent(final String eventId, final String userId) {
-        final User user = userDao.findByUserId(userId).get();
+        final User user = userDao.findByString(userId).get();
         final Event event = eventDao.findByEventId(eventId).get();
 
         if (event == null) {
@@ -37,7 +37,7 @@ public class EventService {
     }
 
     public ResponseMessage removeUserFromEvent(String eventId, String userId) {
-        User user = userDao.findByUserId(userId).get();
+        User user = userDao.findByString(userId).get();
         Event event = eventDao.findByEventId(eventId).get();
         if (event == null) {
             return ResponseMessage.builder().message("Event doesn't exist!").messageType(ResponseMessageType.NOT_FOUND).build();
@@ -45,7 +45,7 @@ public class EventService {
         if (user == null) {
             return ResponseMessage.builder().message("User doesn't exist!").messageType(ResponseMessageType.NOT_FOUND).build();
         }
-        Attendee attendee = new Attendee(userId, Calendar.getInstance().getTime());
+        Attendee attendee = Attendee.of(userId, Calendar.getInstance().getTime());
 
         if (!event.getAttendees().contains(attendee)) {
             return ResponseMessage.builder().message("Event is already not being attended by this user.").messageType(ResponseMessageType.CLIENT_ERROR).build();
@@ -58,7 +58,7 @@ public class EventService {
     }
 
     private ResponseMessage addUserToEvent(Event event, User user) {
-        final Attendee attendee = new Attendee(user.getId(), Calendar.getInstance().getTime());
+        final Attendee attendee = Attendee.of(user.getId(), Calendar.getInstance().getTime());
 
         if (event.getAttendees().contains(attendee)) {
             return ResponseMessage.builder().message("Event is already being attended by this user.").messageType(ResponseMessageType.CLIENT_ERROR).build();
@@ -88,9 +88,13 @@ public class EventService {
     }
 
     public ResponseMessage addUserToControlledEvent(String eventId, String userId, final Optional<User> controllerUser) {
+        return addUserToControlledEvent(eventId, userId, controllerUser, 0);
+    }
+
+    public ResponseMessage addUserToControlledEvent(String eventId, String userId, final Optional<User> controllerUser, int plus) {
 
         final Optional<Event> event = eventDao.findByEventId(eventId);
-        final Optional<User> userToAdd = userDao.findByUserId(userId);
+        final Optional<User> userToAdd = userDao.findByString(userId);
         if (!event.isPresent() || !userToAdd.isPresent()) {
             return ResponseMessage.builder().message("Event or User doesn't exist!").messageType(ResponseMessageType.CLIENT_ERROR).build();
         }
@@ -99,23 +103,22 @@ public class EventService {
 
         }
 
-        if (event.get().getAttendees().contains(new Attendee(userToAdd.get().getId(), null))) {
+        if (event.get().getAttendees().contains(Attendee.of(userToAdd.get().getId(), null))) {
             return ResponseMessage.builder().message("Event is already being attended by this user.").messageType(ResponseMessageType.CLIENT_ERROR).build();
         }
         if (event.get() instanceof ControlledEvent) {
             ControlledEvent controlledEvent = (ControlledEvent) event.get();
             if (controlledEvent.getControlledBy().equals(controllerUser.get().getType()) ||
                     controlledEvent.getControlledBy().getRanksAbove().contains(controllerUser.get().getType())) {
-                Attendee attendee = controlledEvent.getRequestedAttendees().getAttendee(userToAdd.get());
+                Optional<Attendee> attendee = controlledEvent.getRequestedAttendees().getAttendee(userToAdd.get());
 
-                if (attendee == null) {
-                    attendee = new Attendee(userToAdd.get().getId(), Calendar.getInstance().getTime());
-                    controlledEvent.getAttendees().add(attendee);
+                if (!attendee.isPresent()) {
+                    controlledEvent.getAttendees().add(Attendee.of(userToAdd.get().getId(), Calendar.getInstance().getTime(), plus));
                 } else {
-                    controlledEvent.getAttendees().add(attendee);
-                    controlledEvent.getRequestedAttendees().remove(attendee);
+                    attendee.get().setPlus(plus);
+                    controlledEvent.getAttendees().add(attendee.get());
+                    controlledEvent.getRequestedAttendees().remove(attendee.get());
                 }
-
                 eventDao.update(controlledEvent);
                 return ResponseMessage.builder().messageType(ResponseMessageType.ACCEPTED).message(userToAdd.get().getUsername() + " is now attending the event: " + event.get().getName()).build();
 

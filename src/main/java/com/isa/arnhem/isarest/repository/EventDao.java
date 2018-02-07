@@ -1,6 +1,9 @@
 package com.isa.arnhem.isarest.repository;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.isa.arnhem.isarest.models.Event;
+import com.isa.arnhem.isarest.models.EventSet;
 import org.jongo.Jongo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -22,5 +25,9 @@ public class EventDao extends CrudDao<Event> {
     @Override
     public void update(Event item) {
         getCollection().save(item);
+    }
+
+    public EventSet getAll() {
+        return new EventSet(Sets.newTreeSet(Lists.newArrayList(find().as(Event.class).iterator())));
     }
 }

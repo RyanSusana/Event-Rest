@@ -7,8 +7,8 @@ import org.jongo.Jongo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.regex.Pattern;
 
 @Repository
 public class UserDao extends CrudDao<User> {
@@ -39,6 +39,29 @@ public class UserDao extends CrudDao<User> {
 
     public Optional<User> findByEmail(String email) {
         return Optional.ofNullable(findOne("{email: #}", email).as(User.class));
+    }
+
+    public List<User> searchByUsername(String s) {
+        return Lists.newArrayList(find("{username: #}", Pattern.compile(".*"+s+".*")).as(User.class).iterator());
+    }
+
+    public List<User> searchByEmail(String s) {
+        return Lists.newArrayList(find("{email: #}", Pattern.compile(".*"+s+".*")).as(User.class).iterator());
+    }
+
+    public Set<User> search(String s) {
+        Set<User> results = new TreeSet<>(new Comparator<User>() {
+            @Override
+            public int compare(User o1, User o2) {
+                return o1.getUsername().compareToIgnoreCase(o2.getUsername());
+            }
+        });
+        results.addAll(searchByUsername(s));
+        results.addAll(searchByEmail(s));
+        return results;
+    }
+    public List<User> getAll(){
+        return Lists.newArrayList(find().as(User.class).iterator());
     }
 
     public Optional<User> findByUserId(String userId) {

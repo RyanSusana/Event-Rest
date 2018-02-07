@@ -1,8 +1,8 @@
 package com.isa.arnhem.isarest.controllers;
 
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.isa.arnhem.isarest.dto.CalculatedEventDTO;
+import com.isa.arnhem.isarest.dto.CompleteEventDTO;
 import com.isa.arnhem.isarest.dto.EventDTO;
 import com.isa.arnhem.isarest.models.*;
 import com.isa.arnhem.isarest.services.EventService;
@@ -24,10 +24,19 @@ public class EventController extends SecuredController {
 
     @GetMapping
     public @ResponseBody
-    List<EventDTO> getAll() {
+    List<EventDTO> getAll(@RequestParam(value = "includePast", required = false) Boolean includePast) {
         List<EventDTO> eventList = new ArrayList<>();
+        Optional<Boolean> includePastEvents = Optional.ofNullable(includePast);
+        EventSet eventSet = includePastEvents.isPresent() && includePastEvents.get() == true ? eventService.getEventDao().getAll() : eventService.getEventDao().getAll().filterOutPastEvents();
 
-        Sets.newTreeSet(Lists.newArrayList(eventService.getEventDao().find().as(Event.class).iterator())).forEach((event -> eventList.add(new EventDTO(event))));
+        eventSet.forEach((event -> {
+            final Optional<User> loggedInUser = getLoggedInUser();
+            if (loggedInUser.isPresent() && loggedInUser.get().isAuthorative()) {
+                eventList.add(new CalculatedEventDTO(event));
+            } else {
+                eventList.add(new EventDTO(event));
+            }
+        }));
 
 
         return eventList;
@@ -49,9 +58,9 @@ public class EventController extends SecuredController {
         return ResponseMessage.builder().messageType(ResponseMessageType.SUCCESSFUL).message("Created: " + event.getName()).build().toResponseEntity();
     }
 
-    @PutMapping
-    public ResponseEntity<ResponseMessage> updateEvent(@RequestBody EventDTO updated) {
-        Optional<Event> original = eventService.getEventDao().findByEventId(updated.getId());
+    @RequestMapping(path = "/{id}", method = RequestMethod.PUT)
+    public ResponseEntity<ResponseMessage> updateEvent(@PathVariable("id") String id, @RequestBody EventDTO updated) {
+        Optional<Event> original = eventService.getEventDao().findByEventId(id);
         Optional<User> user = getLoggedInUser();
         if (user.isPresent()) {
             if (user.get().getType().hasEqualRightsTo(UserType.ISA_ADMIN)) {
@@ -79,8 +88,19 @@ public class EventController extends SecuredController {
 
     @RequestMapping(path = "/{id}", method = RequestMethod.GET)
     public @ResponseBody
-    Event getEvent(@PathVariable("id") String id) {
-        return eventService.getEventDao().findByEventId(id).get();
+    Object getEvent(@PathVariable("id") String id) {
+        Optional<Event> event = eventService.getEventDao().findByEventId(id);
+        if (event.isPresent()) {
+            final Optional<User> loggedInUser = getLoggedInUser();
+
+            if (loggedInUser.isPresent() && loggedInUser.get().isAuthorative()) {
+                return new CompleteEventDTO(event.get());
+            } else {
+                return new EventDTO(event.get());
+            }
+        }
+        return ResponseMessage.builder().messageType(ResponseMessageType.NOT_FOUND).message("Event does not exist!").build().toResponseEntity();
+
     }
 
     @RequestMapping(path = "/{id}", method = RequestMethod.DELETE)
@@ -98,11 +118,17 @@ public class EventController extends SecuredController {
 
 
     @RequestMapping(path = "/{id}/attendees", method = RequestMethod.POST)
-    public ResponseEntity<ResponseMessage> addAttendee(@PathVariable("id") String eventId, @RequestParam("userId") String userId, @RequestParam(value = "controlled", required = false) Boolean controlled) {
+    public ResponseEntity<ResponseMessage> addAttendee(@PathVariable("id") String eventId, @RequestParam("userId") String userId, @RequestParam(value = "controlled", required = false) Boolean controlled, @RequestParam(value = "plus", required = false) Integer _plus) {
         if (controlled != null && controlled) {
             return eventService.addUserToEvent(eventId, userId).toResponseEntity();
         }
-        return addUserToControlledEvent(eventId, userId, getLoggedInUser());
+        final int plus;
+        if (_plus == null || _plus < 0) {
+            plus = 0;
+        } else {
+            plus = _plus;
+        }
+        return addUserToControlledEvent(eventId, userId, getLoggedInUser(), plus);
     }
 
     @RequestMapping(path = "/{id}/attendees", method = RequestMethod.DELETE)
@@ -117,8 +143,8 @@ public class EventController extends SecuredController {
         return event.getAttendees();
     }
 
-    public ResponseEntity<ResponseMessage> addUserToControlledEvent(String eventId, String userId, Optional<User> controllerUser) {
-        return eventService.addUserToControlledEvent(eventId, userId, controllerUser).toResponseEntity();
+    public ResponseEntity<ResponseMessage> addUserToControlledEvent(String eventId, String userId, Optional<User> controllerUser, int plus) {
+        return eventService.addUserToControlledEvent(eventId, userId, controllerUser, plus).toResponseEntity();
     }
 
 

@@ -1,19 +1,20 @@
 package com.isa.arnhem.isarest.models;
 
 import java.util.HashSet;
+import java.util.Optional;
 
 public class AttendeeSet extends HashSet<Attendee> {
 
-    public Attendee getAttendee(String userId) {
+    public Optional<Attendee> getAttendee(String userId) {
         for (Attendee attendee : this) {
             if (attendee.getUserId().equals(userId)) {
-                return attendee;
+                return Optional.of(attendee);
             }
         }
-        return null;
+        return Optional.empty();
     }
 
-    public Attendee getAttendee(User user) {
+    public Optional<Attendee> getAttendee(User user) {
         return getAttendee(user.getId());
     }
 }

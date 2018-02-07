@@ -9,8 +9,8 @@ import java.util.Optional;
 
 @Getter
 @AllArgsConstructor
-public enum UserType {
-    ISA_MEMBER(50), ISA_ADMIN(100), STUDENT(0), SUPER_ADMIN(10000000), SUSPENDED(-1), BANNED(-10), ISA_SALES_TEAM(75), ISA_TECH(75), ISA_CREATIVE(75);
+public enum UserType implements Comparable<UserType> {
+    ISA_ADMIN(100), ISA_SALES_TEAM(75), ISA_TECH(75), ISA_CREATIVE(75), ISA_MEMBER(50), SUPER_ADMIN(10000000), STUDENT(0), SUSPENDED(-1), BANNED(-10);
 
     private final int level;
 
@@ -42,6 +42,7 @@ public enum UserType {
         return this.level > other.level;
     }
 
+
     public static Optional<UserType> getRank(String s) {
         try {
             return Optional.of(UserType.valueOf(s.trim().replace(" ", "_").toUpperCase()));
@@ -53,4 +54,6 @@ public enum UserType {
             }
         }
     }
+
+
 }

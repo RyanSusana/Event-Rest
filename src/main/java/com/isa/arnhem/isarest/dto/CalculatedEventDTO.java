@@ -2,17 +2,11 @@ package com.isa.arnhem.isarest.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.isa.arnhem.isarest.models.Attendee;
-import com.isa.arnhem.isarest.models.AttendeeSet;
-import com.isa.arnhem.isarest.models.Description;
 import com.isa.arnhem.isarest.models.Event;
 import lombok.Getter;
 
-import java.math.BigDecimal;
-import java.util.Date;
-import java.util.Map;
-
 @Getter
-public class CalculatedEventDTO extends EventDTO{
+public class CalculatedEventDTO extends EventDTO {
 
 
     @JsonProperty("total_attendees")

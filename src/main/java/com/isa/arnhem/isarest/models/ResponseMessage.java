@@ -25,9 +25,10 @@ public class ResponseMessage {
     private final Map<String, Object> properties;
 
     @JsonProperty("status")
-    public int getStatusCode(){
+    public int getStatusCode() {
         return messageType.getStatus();
     }
+
     public ResponseEntity<ResponseMessage> toResponseEntity() {
         return new ResponseEntity<>(this, HttpStatus.valueOf(messageType.getStatus()));
     }

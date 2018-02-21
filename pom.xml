@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
@@ -95,7 +95,16 @@
             <artifactId>spring-boot-starter-security</artifactId>
             <version>1.5.9.RELEASE</version>
         </dependency>
-
+        <dependency>
+            <groupId>nl.stil4m</groupId>
+            <artifactId>mollie-api</artifactId>
+            <version>2.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.slugify</groupId>
+            <artifactId>slugify</artifactId>
+            <version>2.2</version>
+        </dependency>
     </dependencies>
 
     <properties>
@@ -161,6 +170,11 @@
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
+        </repository>
+        <repository>
+            <id>stil4m-releases</id>
+            <name>stil4m-releases</name>
+            <url>https://github.com/stil4m/maven-repository/raw/master/releases/</url>
         </repository>
     </repositories>
 

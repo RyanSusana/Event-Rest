@@ -107,7 +107,7 @@ public class EventControllerTest extends BaseIntegrationTest {
         testSubject = userDao.findByUsername("Ryan").get();
 
 
-        testEvent = eventDao.findByEventId(testEvent.getId()).get();
+        testEvent = eventDao.findById(testEvent.getId()).get();
     }
 
     @Test

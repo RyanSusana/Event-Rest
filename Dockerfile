@@ -1,4 +1,4 @@
-FROM openjdk:9
+FROM openjdk:9-slim
 VOLUME /tmp
 ADD /target/isa-rest-0.0.1-SNAPSHOT.jar app.jar
 ADD /target/event-rest-jar-with-dependencies.jar dependencies.jar

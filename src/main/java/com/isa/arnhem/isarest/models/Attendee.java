@@ -44,18 +44,26 @@ public class Attendee {
     public static Attendee of(String userId, Date signUpDate) {
         Map<String, Object> props = new HashMap<>();
         props.put("user_id", userId);
-        if(signUpDate == null ){
+        if (signUpDate == null) {
             props.put("sign_up_date", Calendar.getInstance().getTime());
-        }else {
+        } else {
             props.put("sign_up_date", signUpDate);
         }
         return new Attendee(props);
     }
+
     public static Attendee of(String userId, Date signUpDate, int plus) {
         Map<String, Object> props = new HashMap<>();
         props.put("user_id", userId);
         props.put("sign_up_date", signUpDate);
         props.put("plus", plus);
         return new Attendee(props);
+    }
+
+    public int getPlus() {
+        if (plus < 0) {
+            return 0;
+        }
+        return plus;
     }
 }

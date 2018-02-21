@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Optional;
@@ -21,11 +20,12 @@ public class EventService {
     private final EventDao eventDao;
     private final UserDao userDao;
 
+
     private final NotificationDao notificationDao;
 
     public ResponseMessage addUserToEvent(final String eventId, final String userId) {
         final User user = userDao.findByString(userId).get();
-        final Event event = eventDao.findByEventId(eventId).get();
+        final Event event = eventDao.findById(eventId).get();
 
         if (event == null) {
             return ResponseMessage.builder().message("Event doesn't exist!").messageType(ResponseMessageType.CLIENT_ERROR).build();
@@ -37,23 +37,27 @@ public class EventService {
     }
 
     public ResponseMessage removeUserFromEvent(String eventId, String userId) {
-        User user = userDao.findByString(userId).get();
-        Event event = eventDao.findByEventId(eventId).get();
-        if (event == null) {
+        Optional<User> user = userDao.findByString(userId);
+        Optional<Event> event = eventDao.findById(eventId);
+        if (!event.isPresent()) {
             return ResponseMessage.builder().message("Event doesn't exist!").messageType(ResponseMessageType.NOT_FOUND).build();
         }
-        if (user == null) {
+        if (event.get() instanceof PayedEvent) {
+            return ResponseMessage.builder().message("You have already payed for this event, refunds are not allowed.").messageType(ResponseMessageType.CLIENT_ERROR).build();
+        }
+        if (!user.isPresent()) {
             return ResponseMessage.builder().message("User doesn't exist!").messageType(ResponseMessageType.NOT_FOUND).build();
         }
         Attendee attendee = Attendee.of(userId, Calendar.getInstance().getTime());
 
-        if (!event.getAttendees().contains(attendee)) {
+        if (!event.get().getAttendees().contains(attendee)) {
             return ResponseMessage.builder().message("Event is already not being attended by this user.").messageType(ResponseMessageType.CLIENT_ERROR).build();
         }
-        event.getAttendees().remove(attendee);
 
-        eventDao.update(event);
-        return ResponseMessage.builder().message("Removed " + user.getUsername() + " from the event: " + event.getName()).messageType(ResponseMessageType.SUCCESSFUL).build();
+        event.get().getAttendees().remove(attendee);
+
+        eventDao.update(event.get());
+        return ResponseMessage.builder().message("Removed " + user.get().getUsername() + " from the event: " + event.get().getName()).messageType(ResponseMessageType.SUCCESSFUL).build();
 
     }
 
@@ -71,13 +75,7 @@ public class EventService {
             controlledEvent.getRequestedAttendees().add(attendee);
             eventDao.update(controlledEvent);
             List<User> admins = userDao.findByTypeAndAbove(controlledEvent.getControlledBy());
-            List<Notification> notifications = new ArrayList<>();
-            admins.forEach((admin) -> {
-                Notification notification = new Notification();
-                notification.setUserId(admin.getId());
-                notification.setMessage(user.getUsername() + " has requested to join the event: " + controlledEvent.getName());
-            });
-            notificationDao.create(notifications);
+            notificationDao.notify(user.getUsername() + " has requested to join the event: " + controlledEvent.getName(), NotificationType.MESSAGE, admins);
             return ResponseMessage.builder().message(user.getUsername() + " has requested to join the event: " + controlledEvent.getName()).messageType(ResponseMessageType.ACCEPTED).build();
         } else {
             event.getAttendees().add(attendee);
@@ -93,7 +91,7 @@ public class EventService {
 
     public ResponseMessage addUserToControlledEvent(String eventId, String userId, final Optional<User> controllerUser, int plus) {
 
-        final Optional<Event> event = eventDao.findByEventId(eventId);
+        final Optional<Event> event = eventDao.findById(eventId);
         final Optional<User> userToAdd = userDao.findByString(userId);
         if (!event.isPresent() || !userToAdd.isPresent()) {
             return ResponseMessage.builder().message("Event or User doesn't exist!").messageType(ResponseMessageType.CLIENT_ERROR).build();

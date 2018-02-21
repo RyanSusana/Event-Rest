@@ -14,6 +14,18 @@ public enum UserType implements Comparable<UserType> {
 
     private final int level;
 
+    public static Optional<UserType> getRank(String s) {
+        try {
+            return Optional.of(UserType.valueOf(s.trim().replace(" ", "_").toUpperCase()));
+        } catch (Exception e) {
+            if (!s.toUpperCase().contains("ISA")) {
+                return getRank("ISA_" + s);
+            } else {
+                return Optional.empty();
+            }
+        }
+    }
+
     public List<UserType> getRanksAbove() {
         List<UserType> list = new ArrayList<>();
         for (UserType userType : UserType.values()) {
@@ -40,19 +52,6 @@ public enum UserType implements Comparable<UserType> {
 
     public boolean hasMoreRightsThan(UserType other) {
         return this.level > other.level;
-    }
-
-
-    public static Optional<UserType> getRank(String s) {
-        try {
-            return Optional.of(UserType.valueOf(s.trim().replace(" ", "_").toUpperCase()));
-        } catch (Exception e) {
-            if (!s.toUpperCase().contains("ISA")) {
-                return getRank("ISA_" + s);
-            } else {
-                return Optional.empty();
-            }
-        }
     }
 
 

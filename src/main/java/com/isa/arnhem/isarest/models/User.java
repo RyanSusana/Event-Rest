@@ -66,7 +66,7 @@ public class User implements Identifiable {
     }
 
     @JsonProperty("authorative")
-    public boolean isAuthorative(){
+    public boolean isAuthorative() {
         return getType().hasEqualRightsTo(UserType.ISA_MEMBER);
     }
 

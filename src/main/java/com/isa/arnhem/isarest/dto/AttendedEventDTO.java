@@ -10,7 +10,7 @@ import lombok.Getter;
 import java.util.Optional;
 
 @Getter
-public class AttendedEventDTO extends EventDTO{
+public class AttendedEventDTO extends EventDTO {
     @JsonProperty("attendees")
     private final AttendeeSet attendees;
 
@@ -34,7 +34,6 @@ public class AttendedEventDTO extends EventDTO{
 
 
     }
-
 
 
 }

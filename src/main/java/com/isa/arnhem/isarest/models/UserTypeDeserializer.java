@@ -13,10 +13,10 @@ public class UserTypeDeserializer extends JsonDeserializer<UserType> {
     public UserType deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
         Optional<UserType> rank = UserType.getRank(jsonParser.getValueAsString());
 
-        if(rank.isPresent()){
+        if (rank.isPresent()) {
             return rank.get();
-        }else{
-            throw new IllegalArgumentException(jsonParser.getValueAsString()+" is not a valid rank");
+        } else {
+            throw new IllegalArgumentException(jsonParser.getValueAsString() + " is not a valid rank");
         }
     }
 }

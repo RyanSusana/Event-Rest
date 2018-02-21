@@ -5,6 +5,7 @@ import org.jongo.Find;
 import org.jongo.FindOne;
 
 import java.util.Collection;
+import java.util.Optional;
 
 
 public interface Crud<T extends Identifiable> {
@@ -23,9 +24,14 @@ public interface Crud<T extends Identifiable> {
 
     Find find(String query, Object... params);
 
+
     FindOne findOne(String query);
 
     FindOne findOne(String query, Object... params);
+
+    Optional<T> findById(String id);
+
+    Collection<T> getAll();
 
     default Find find() {
         return find("{}");

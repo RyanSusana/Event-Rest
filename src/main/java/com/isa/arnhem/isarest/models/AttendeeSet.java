@@ -14,7 +14,13 @@ public class AttendeeSet extends HashSet<Attendee> {
         return Optional.empty();
     }
 
+    public boolean containsUser(User user) {
+        return getAttendee(user).isPresent();
+    }
+
     public Optional<Attendee> getAttendee(User user) {
         return getAttendee(user.getId());
     }
+
+
 }

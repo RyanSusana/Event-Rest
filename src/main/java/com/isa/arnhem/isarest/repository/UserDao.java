@@ -7,8 +7,12 @@ import org.jongo.Jongo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Repository
 public class UserDao extends CrudDao<User> {
@@ -19,7 +23,7 @@ public class UserDao extends CrudDao<User> {
     }
 
     public Optional<User> findByUsername(String username) {
-        return Optional.ofNullable(findOne("{username: #}", username).as(User.class));
+        return Optional.ofNullable(findOne("{username: #}", Pattern.compile("(?i)" + username)).as(User.class));
     }
 
     public List<User> findByTypeAndAbove(UserType type) {
@@ -34,42 +38,34 @@ public class UserDao extends CrudDao<User> {
     }
 
     public Optional<User> findByString(String s) {
-        return findByUserId(s).or(() -> findByUsernameOrEmail(s));
+        return findById(s).or(() -> findByUsernameOrEmail(s));
     }
 
     public Optional<User> findByEmail(String email) {
-        return Optional.ofNullable(findOne("{email: #}", email).as(User.class));
+        return Optional.ofNullable(findOne("{email: #}", Pattern.compile("(?i)" + email)).as(User.class));
     }
 
     public List<User> searchByUsername(String s) {
-        return Lists.newArrayList(find("{username: #}", Pattern.compile(".*"+s+".*")).as(User.class).iterator());
+        return Lists.newArrayList(find("{username: #}", Pattern.compile("(?i).*" + s + ".*")).as(User.class).iterator());
     }
 
     public List<User> searchByEmail(String s) {
-        return Lists.newArrayList(find("{email: #}", Pattern.compile(".*"+s+".*")).as(User.class).iterator());
+        return Lists.newArrayList(find("{email: #}", Pattern.compile("(?i).*" + s + ".*")).as(User.class).iterator());
     }
 
     public Set<User> search(String s) {
-        Set<User> results = new TreeSet<>(new Comparator<User>() {
-            @Override
-            public int compare(User o1, User o2) {
-                return o1.getUsername().compareToIgnoreCase(o2.getUsername());
-            }
-        });
+        Set<User> results = new TreeSet<>((o1, o2) -> o1.getUsername().compareToIgnoreCase(o2.getUsername()));
         results.addAll(searchByUsername(s));
         results.addAll(searchByEmail(s));
         return results;
     }
-    public List<User> getAll(){
-        return Lists.newArrayList(find().as(User.class).iterator());
+
+    public Set<User> getAll() {
+        return Lists.newArrayList(find().as(User.class).iterator()).stream().collect(Collectors.toSet());
     }
 
-    public Optional<User> findByUserId(String userId) {
+    public Optional<User> findById(String userId) {
         return Optional.ofNullable(findOne("{_id: #}", userId).as(User.class));
-    }
-
-    public void deleteByUserId(String userId) {
-        delete("{_id: #}", userId);
     }
 
     @Override

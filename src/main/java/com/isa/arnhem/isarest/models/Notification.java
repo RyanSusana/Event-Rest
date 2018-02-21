@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.validation.constraints.NotNull;
-import java.time.ZonedDateTime;
+import java.util.Date;
 
 @Getter
 @Setter
@@ -19,14 +19,12 @@ public class Notification implements Comparable<Notification>, Identifiable {
 
     private NotificationType type;
 
-    private int priority = 0;
-
-    private ZonedDateTime date;
+    private Date date;
 
     @Override
     @NotNull
     public int compareTo(Notification o) {
-        int priorityCompare = Integer.compare(this.priority, o.priority);
+        int priorityCompare = Integer.compare(this.type.getPriority(), o.type.getPriority());
 
         if (priorityCompare == 0) {
             return this.date.compareTo(o.date);

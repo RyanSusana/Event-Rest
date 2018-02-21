@@ -13,27 +13,24 @@ import java.util.Map;
 public class EventDTO implements Comparable<EventDTO> {
     @JsonProperty("_id")
     private final String id;
-
-    @JsonProperty("name")
-    private String name;
-
     @JsonProperty("priority")
     private final int priority;
-
     @JsonProperty("description")
     private final Description description;
-
     @JsonProperty("main_image")
     private final String mainImage;
-
+    @JsonProperty("event_type")
+    private final String type;
     @JsonProperty("price")
     private final BigDecimal price;
-
     @JsonProperty("properties")
     private final Map<String, Object> properties;
-
     @JsonProperty("date")
     private final Date date;
+    @JsonProperty("slug")
+    private final String slug;
+    @JsonProperty("name")
+    private String name;
 
     public EventDTO(Event event) {
         this.name = event.getName();
@@ -44,6 +41,8 @@ public class EventDTO implements Comparable<EventDTO> {
         this.properties = event.getProperties();
         this.id = event.getId();
         this.date = event.getDate();
+        this.type = event.getType();
+        this.slug = event.getSlug();
     }
 
     @Override
@@ -56,7 +55,8 @@ public class EventDTO implements Comparable<EventDTO> {
 
         return priorityCompare;
     }
-    void setName(String name){
+
+    void setName(String name) {
         this.name = name;
     }
 }

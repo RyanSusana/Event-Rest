@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,9 +27,10 @@ public class UserController extends SecuredController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+
     @RequestMapping(path = "/secured/", method = RequestMethod.GET)
     public @ResponseBody
-    List<User> getAll() {
+    Set<User> getAll() {
         return userService.getUserDao().getAll();
     }
 
@@ -174,7 +176,7 @@ public class UserController extends SecuredController {
         TreeSet<AttendedEventDTO> events = new TreeSet<>();
 
 
-        EventSet.of(userService.getEventDao().find("{'attendees.user_id': #}", id)
+        EventList.of(userService.getEventDao().find("{'attendees.user_id': #}", id)
                 .projection("{_id: 1, price: 1, name: 1, main_image: 1, event_type: 1, date: 1, attendees: 1}")
                 .as(Event.class)).filterOutPastEvents().forEach((event -> {
             events.add(new AttendedEventDTO(event, id, false));
@@ -182,7 +184,7 @@ public class UserController extends SecuredController {
 
         TreeSet<AttendedEventDTO> requestedEvents = new TreeSet<>();
 
-        EventSet.of(userService.getEventDao().find("{'requested_attendees.user_id': #}", id)
+        EventList.of(userService.getEventDao().find("{'requested_attendees.user_id': #}", id)
                 .projection("{_id: 1, price: 1, name: 1, main_image: 1, event_type: 1, date: 1, requested_attendees: 1}")
                 .as(Event.class)).filterOutPastEvents().forEach((event -> {
             requestedEvents.add(new AttendedEventDTO(event, id, true));
@@ -196,7 +198,7 @@ public class UserController extends SecuredController {
 
     @RequestMapping(path = "/activate/{id}", method = RequestMethod.GET)
     public ResponseEntity<String> activateUser(@PathVariable("id") String id) {
-        User user = userService.getUserDao().findByUserId(id).get();
+        User user = userService.getUserDao().findById(id).get();
         if (user == null) {
             return new ResponseEntity<>("Cannot find user with id: " + id, HttpStatus.NOT_FOUND);
         }
@@ -210,8 +212,8 @@ public class UserController extends SecuredController {
     }
 
     @RequestMapping(path = "/logout", method = RequestMethod.GET)
-    public void logOut() {
-        logout();
+    public void logOut(HttpServletRequest request) {
+        request.getSession().invalidate();
     }
 
     public String evaluateUsername(String username) {

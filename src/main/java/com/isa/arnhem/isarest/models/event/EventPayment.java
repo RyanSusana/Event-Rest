@@ -1,4 +1,4 @@
-package com.isa.arnhem.isarest.models;
+package com.isa.arnhem.isarest.models.event;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -16,4 +16,5 @@ public class EventPayment {
 
     @JsonProperty("payment_id")
     private String paymentId;
+
 }

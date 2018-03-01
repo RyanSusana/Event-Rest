@@ -1,7 +1,7 @@
 package com.isa.arnhem.isarest.services;
 
-import com.isa.arnhem.isarest.models.User;
-import com.isa.arnhem.isarest.models.UserDetail;
+import com.isa.arnhem.isarest.models.user.User;
+import com.isa.arnhem.isarest.models.user.UserDetail;
 import com.isa.arnhem.isarest.repository.UserDao;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +10,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 @Getter
@@ -20,11 +22,12 @@ public class UserDetailService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
 
-        User user = userDao.findByUsernameOrEmail(s).get();
+        Optional<User> user = userDao.findByUsernameOrEmail(s);
 
-        if (user == null) {
-            return null;
+
+        if (user.isPresent()) {
+            return new UserDetail(user.get());
         }
-        return new UserDetail(user);
+        throw new UsernameNotFoundException("Username not found!");
     }
 }

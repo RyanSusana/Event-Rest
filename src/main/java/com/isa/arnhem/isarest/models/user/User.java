@@ -1,20 +1,20 @@
-package com.isa.arnhem.isarest.models;
+package com.isa.arnhem.isarest.models.user;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import lombok.EqualsAndHashCode;
+import com.isa.arnhem.isarest.models.Identifiable;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Objects;
 import java.util.UUID;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Getter
 @Setter
-@EqualsAndHashCode(of = "id")
 public class User implements Identifiable {
 
     private String id;
@@ -68,6 +68,22 @@ public class User implements Identifiable {
     @JsonProperty("authorative")
     public boolean isAuthorative() {
         return getType().hasEqualRightsTo(UserType.ISA_MEMBER);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof User) {
+            return (((User) obj).getId().equals(this.getId()));
+        } else if (obj instanceof Attendee) {
+            return ((Attendee) obj).getUserId().equals(this.getId());
+        } else {
+            return Objects.equals(this, obj);
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.getId());
     }
 
 

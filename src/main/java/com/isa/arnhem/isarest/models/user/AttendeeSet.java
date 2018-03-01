@@ -1,4 +1,4 @@
-package com.isa.arnhem.isarest.models;
+package com.isa.arnhem.isarest.models.user;
 
 import java.util.HashSet;
 import java.util.Optional;

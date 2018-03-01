@@ -1,4 +1,4 @@
-package com.isa.arnhem.isarest.models;
+package com.isa.arnhem.isarest.models.event;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -6,6 +6,10 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.slugify.Slugify;
+import com.isa.arnhem.isarest.models.Description;
+import com.isa.arnhem.isarest.models.Identifiable;
+import com.isa.arnhem.isarest.models.JsonDateSerializer;
+import com.isa.arnhem.isarest.models.user.AttendeeSet;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;

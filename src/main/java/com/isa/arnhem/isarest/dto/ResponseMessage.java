@@ -1,4 +1,4 @@
-package com.isa.arnhem.isarest.models;
+package com.isa.arnhem.isarest.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,13 +12,13 @@ import java.util.Map;
 @Builder
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ResponseMessage {
+public class ResponseMessage extends ReturnedObject implements Response {
     @JsonProperty("message")
     private final String message;
 
     @JsonProperty("message_type")
     @NonNull
-    private final ResponseMessageType messageType;
+    private final ResponseType type;
 
     @JsonProperty("properties")
     @Singular
@@ -26,10 +26,10 @@ public class ResponseMessage {
 
     @JsonProperty("status")
     public int getStatusCode() {
-        return messageType.getStatus();
+        return type.getStatus();
     }
 
     public ResponseEntity<ResponseMessage> toResponseEntity() {
-        return new ResponseEntity<>(this, HttpStatus.valueOf(messageType.getStatus()));
+        return new ResponseEntity<>(this, HttpStatus.valueOf(type.getStatus()));
     }
 }

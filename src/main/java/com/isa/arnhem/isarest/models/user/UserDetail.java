@@ -1,4 +1,4 @@
-package com.isa.arnhem.isarest.models;
+package com.isa.arnhem.isarest.models.user;
 
 import com.google.common.collect.Lists;
 import lombok.AllArgsConstructor;

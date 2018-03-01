@@ -2,7 +2,7 @@ package com.isa.arnhem.isarest.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.isa.arnhem.isarest.models.Description;
-import com.isa.arnhem.isarest.models.Event;
+import com.isa.arnhem.isarest.models.event.Event;
 import lombok.Getter;
 
 import java.math.BigDecimal;
@@ -10,11 +10,11 @@ import java.util.Date;
 import java.util.Map;
 
 @Getter
-public class EventDTO implements Comparable<EventDTO> {
+public class EventDTO extends ReturnedObject implements Comparable<EventDTO> {
     @JsonProperty("_id")
     private final String id;
     @JsonProperty("priority")
-    private final int priority;
+    private final Integer priority;
     @JsonProperty("description")
     private final Description description;
     @JsonProperty("main_image")

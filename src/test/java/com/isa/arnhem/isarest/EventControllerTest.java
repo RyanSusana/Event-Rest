@@ -1,6 +1,6 @@
 package com.isa.arnhem.isarest;
 
-public class EventControllerTest extends BaseIntegrationTest {
+class EventControllerTest extends BaseIntegrationTest {
 /*
     EventService eventService;
     EventController eventController;
@@ -122,7 +122,7 @@ public class EventControllerTest extends BaseIntegrationTest {
         ResponseMessage responseMessage = eventController.addEvent(testEvent2).getBody();
 
         List<EventDTO> events = eventController.getAll();
-        assertEquals(ResponseMessageType.SUCCESSFUL, responseMessage.getMessageType());
+        assertEquals(ResponseMessageType.SUCCESSFUL, responseMessage.getType());
         assertEquals(initSize + 1, events.size());
     }
 
@@ -156,7 +156,7 @@ public class EventControllerTest extends BaseIntegrationTest {
         ControlledEvent updatedEvent =(ControlledEvent) eventController.getEvent(testControlledEvent.getId());
 
         assertEquals(0, updatedEvent.getAttendees().size());
-        assertEquals(ResponseMessageType.UNAUTHORIZED, message.getMessageType());
+        assertEquals(ResponseMessageType.UNAUTHORIZED, message.getType());
     }
     @Test
     public void testAddedToTheAttendeesListOnControlledEventWithAppropriateRankingUser() {
@@ -167,7 +167,7 @@ public class EventControllerTest extends BaseIntegrationTest {
 
         assertEquals(1, updatedEvent.getAttendees().size());
         assertEquals(0, updatedEvent.getRequestedAttendees().size());
-        assertEquals(ResponseMessageType.SUCCESSFUL, message.getMessageType());
+        assertEquals(ResponseMessageType.SUCCESSFUL, message.getType());
     }
     */
 }

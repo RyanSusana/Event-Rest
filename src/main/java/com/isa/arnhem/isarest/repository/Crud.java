@@ -8,13 +8,11 @@ import java.util.Collection;
 import java.util.Optional;
 
 
-public interface Crud<T extends Identifiable> {
+interface Crud<T extends Identifiable> {
 
     void create(T... items);
 
-    void delete(String query, Object... params);
 
-    void delete(String query);
 
     void delete(T item);
 
@@ -37,9 +35,6 @@ public interface Crud<T extends Identifiable> {
         return find("{}");
     }
 
-    default void deleteAll() {
-        delete("{}");
-    }
 
     default void update(T[] items) {
         for (T item : items) {

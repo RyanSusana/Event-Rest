@@ -5,7 +5,6 @@ import com.mongodb.MongoClient;
 import com.mongodb.ServerAddress;
 import org.jongo.Jongo;
 import org.jongo.marshall.jackson.JacksonMapper;
-import org.jongo.marshall.jackson.configuration.Mapping;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,7 +32,7 @@ public class MongoConfiguration {
     @Bean
     public Jongo jongo() {
         return new Jongo(mongoClient().getDB(databaseName), new JacksonMapper.Builder()
-                .withObjectIdUpdater(new CustomObjectIdUpdater(Mapping.defaultMapping().getObjectMapper()))
+                .withObjectIdUpdater(new CustomObjectIdUpdater())
                 .build());
     }
 

@@ -1,8 +1,8 @@
 package com.isa.arnhem.isarest.repository;
 
 import com.google.common.collect.Lists;
-import com.isa.arnhem.isarest.models.User;
-import com.isa.arnhem.isarest.models.UserType;
+import com.isa.arnhem.isarest.models.user.User;
+import com.isa.arnhem.isarest.models.user.UserType;
 import org.jongo.Jongo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -45,11 +45,11 @@ public class UserDao extends CrudDao<User> {
         return Optional.ofNullable(findOne("{email: #}", Pattern.compile("(?i)" + email)).as(User.class));
     }
 
-    public List<User> searchByUsername(String s) {
+    private List<User> searchByUsername(String s) {
         return Lists.newArrayList(find("{username: #}", Pattern.compile("(?i).*" + s + ".*")).as(User.class).iterator());
     }
 
-    public List<User> searchByEmail(String s) {
+    private List<User> searchByEmail(String s) {
         return Lists.newArrayList(find("{email: #}", Pattern.compile("(?i).*" + s + ".*")).as(User.class).iterator());
     }
 
@@ -61,7 +61,10 @@ public class UserDao extends CrudDao<User> {
     }
 
     public Set<User> getAll() {
-        return Lists.newArrayList(find().as(User.class).iterator()).stream().collect(Collectors.toSet());
+        return Lists.newArrayList(find().as(User.class).iterator())
+                .stream()
+                .collect(Collectors.toCollection(() ->
+                        new TreeSet<>((o1, o2) -> o1.getUsername().compareToIgnoreCase(o2.getUsername()))));
     }
 
     public Optional<User> findById(String userId) {

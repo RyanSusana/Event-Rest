@@ -4,14 +4,11 @@ import com.google.common.collect.Lists;
 import com.isa.arnhem.isarest.models.Notification;
 import com.isa.arnhem.isarest.models.NotificationType;
 import com.isa.arnhem.isarest.models.ResultPage;
-import com.isa.arnhem.isarest.models.User;
+import com.isa.arnhem.isarest.models.user.User;
 import org.jongo.Jongo;
 import org.springframework.stereotype.Repository;
 
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Repository
 public class NotificationDao extends CrudDao<Notification> {
@@ -44,11 +41,7 @@ public class NotificationDao extends CrudDao<Notification> {
         return results;
     }
 
-    public void notify(String notification, NotificationType type, User... users) {
-        notify(notification, type, Lists.newArrayList(users));
-    }
-
-    public void notify(String notif, NotificationType type, Collection<User> users) {
+    public void notifyUsers(String notif, NotificationType type, Collection<User> users) {
         users.forEach((user) -> {
             Notification notification = new Notification();
             notification.setMessage(notif);
@@ -66,6 +59,6 @@ public class NotificationDao extends CrudDao<Notification> {
 
     @Override
     public Set<Notification> getAll() {
-        return null;
+        return new TreeSet<>();
     }
 }

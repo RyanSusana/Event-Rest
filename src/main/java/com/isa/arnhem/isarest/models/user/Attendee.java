@@ -1,15 +1,13 @@
-package com.isa.arnhem.isarest.models;
+package com.isa.arnhem.isarest.models.user;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.*;
 
 @Getter
-@EqualsAndHashCode(of = "userId")
 public class Attendee {
     @JsonProperty("user_id")
     private final String userId;
@@ -22,7 +20,7 @@ public class Attendee {
     private int plus;
 
     @JsonCreator
-    public Attendee(Map<String, Object> props) {
+    private Attendee(Map<String, Object> props) {
         Optional<String> userId = Optional.of((String) props.get("user_id"));
         Optional<Date> signUpDate = Optional.of((Date) props.get("sign_up_date"));
         Optional<Integer> plus = Optional.ofNullable((Integer) props.get("plus"));
@@ -33,11 +31,7 @@ public class Attendee {
         this.userId = userId.get();
         this.signUpDate = signUpDate.get();
 
-        if (plus.isPresent()) {
-            this.plus = plus.get();
-        } else {
-            this.plus = 0;
-        }
+        this.plus = plus.orElse(0);
     }
 
 
@@ -65,5 +59,22 @@ public class Attendee {
             return 0;
         }
         return plus;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof User) {
+            return (((User) obj).getId().equals(this.getUserId()));
+        } else if (obj instanceof Attendee) {
+            return ((Attendee) obj).getUserId().equals(this.getUserId());
+        } else {
+            return Objects.equals(this, obj);
+        }
+    }
+
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.getUserId());
     }
 }

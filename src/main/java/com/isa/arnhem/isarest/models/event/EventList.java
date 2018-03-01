@@ -1,4 +1,4 @@
-package com.isa.arnhem.isarest.models;
+package com.isa.arnhem.isarest.models.event;
 
 import com.google.common.collect.Sets;
 
@@ -14,7 +14,7 @@ public class EventList extends ArrayList<Event> {
         super();
     }
 
-    public EventList(Collection<Event> list) {
+    private EventList(Collection<Event> list) {
         super();
         this.addAll(list);
     }
@@ -31,10 +31,10 @@ public class EventList extends ArrayList<Event> {
     }
 
     public EventList filterOutPastEvents() {
-        return new EventList(this.stream().filter((event) -> event.getDate().after(getYesterday())).collect(Collectors.toSet()));
+        return this.stream().filter((event) -> event.getDate().after(getYesterday())).distinct().collect(Collectors.toCollection(EventList::new));
     }
 
     public EventList filterOutFutureEvents() {
-        return new EventList(this.stream().filter((event) -> event.getDate().before(getYesterday())).collect(Collectors.toSet()));
+        return this.stream().filter((event) -> event.getDate().before(getYesterday())).distinct().collect(Collectors.toCollection(EventList::new));
     }
 }

@@ -1,130 +1,319 @@
 package com.isa.arnhem.isarest.services;
 
-import com.isa.arnhem.isarest.models.*;
-import com.isa.arnhem.isarest.repository.EventDao;
-import com.isa.arnhem.isarest.repository.NotificationDao;
-import com.isa.arnhem.isarest.repository.UserDao;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import com.isa.arnhem.isarest.dto.*;
+import com.isa.arnhem.isarest.models.NotificationType;
+import com.isa.arnhem.isarest.models.event.*;
+import com.isa.arnhem.isarest.models.user.Attendee;
+import com.isa.arnhem.isarest.models.user.AttendeeSet;
+import com.isa.arnhem.isarest.models.user.User;
+import com.isa.arnhem.isarest.models.user.UserType;
+import com.isa.arnhem.isarest.repository.DaoRepository;
+import nl.stil4m.mollie.Client;
+import nl.stil4m.mollie.ResponseOrError;
+import nl.stil4m.mollie.domain.CreatePayment;
+import nl.stil4m.mollie.domain.Payment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Calendar;
-import java.util.List;
-import java.util.Optional;
+import java.io.IOException;
+import java.util.*;
 
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Service
-@Getter
-public class EventService {
-    private final EventDao eventDao;
-    private final UserDao userDao;
+public class EventService extends BaseService {
 
+    private final Client mollieClient;
 
-    private final NotificationDao notificationDao;
+    @Autowired
+    public EventService(DaoRepository daoRepository, Client mollieClient) {
+        super(daoRepository);
+        this.mollieClient = mollieClient;
+    }
+
 
     public ResponseMessage addUserToEvent(final String eventId, final String userId) {
-        final User user = userDao.findByString(userId).get();
-        final Event event = eventDao.findById(eventId).get();
+        final User user = evaluateUserLoggedIn(userId);
+        final Event event = evaluateEvent(eventId);
 
-        if (event == null) {
-            return ResponseMessage.builder().message("Event doesn't exist!").messageType(ResponseMessageType.CLIENT_ERROR).build();
-        }
-        if (user == null) {
-            return ResponseMessage.builder().message("User doesn't exist!").messageType(ResponseMessageType.CLIENT_ERROR).build();
-        }
         return addUserToEvent(event, user);
     }
 
-    public ResponseMessage removeUserFromEvent(String eventId, String userId) {
-        Optional<User> user = userDao.findByString(userId);
-        Optional<Event> event = eventDao.findById(eventId);
-        if (!event.isPresent()) {
-            return ResponseMessage.builder().message("Event doesn't exist!").messageType(ResponseMessageType.NOT_FOUND).build();
-        }
-        if (event.get() instanceof PayedEvent) {
-            return ResponseMessage.builder().message("You have already payed for this event, refunds are not allowed.").messageType(ResponseMessageType.CLIENT_ERROR).build();
-        }
-        if (!user.isPresent()) {
-            return ResponseMessage.builder().message("User doesn't exist!").messageType(ResponseMessageType.NOT_FOUND).build();
-        }
+    public ResponseMessage removeUserFromEvent(final String eventId, final String userId) {
+        final User user = evaluateUserLoggedIn(userId);
+        final Event event = evaluateEvent(eventId);
+
         Attendee attendee = Attendee.of(userId, Calendar.getInstance().getTime());
 
-        if (!event.get().getAttendees().contains(attendee)) {
-            return ResponseMessage.builder().message("Event is already not being attended by this user.").messageType(ResponseMessageType.CLIENT_ERROR).build();
+        if (!event.getAttendees().contains(attendee)) {
+            return ResponseMessage.builder()
+                    .message("Event is already not being attended by this user.")
+                    .type(ResponseType.CLIENT_ERROR)
+                    .build();
+        } else {
+            if (event instanceof PayedEvent) {
+                return ResponseMessage.builder()
+                        .message("You have already payed for this event, refunds are not allowed.")
+                        .type(ResponseType.CLIENT_ERROR)
+                        .build();
+            } else {
+                event.getAttendees().remove(attendee);
+                eventDao.update(event);
+                return ResponseMessage.builder()
+                        .message("Removed " + user.getUsername() + " from the event: " + event.getName())
+                        .type(ResponseType.SUCCESSFUL)
+                        .build();
+            }
         }
-
-        event.get().getAttendees().remove(attendee);
-
-        eventDao.update(event.get());
-        return ResponseMessage.builder().message("Removed " + user.get().getUsername() + " from the event: " + event.get().getName()).messageType(ResponseMessageType.SUCCESSFUL).build();
-
     }
 
-    private ResponseMessage addUserToEvent(Event event, User user) {
+    private ResponseMessage addUserToEvent(final Event event, final User user) {
         final Attendee attendee = Attendee.of(user.getId(), Calendar.getInstance().getTime());
 
         if (event.getAttendees().contains(attendee)) {
-            return ResponseMessage.builder().message("Event is already being attended by this user.").messageType(ResponseMessageType.CLIENT_ERROR).build();
+            return ResponseMessage.builder()
+                    .message("Event is already being attended by this user.")
+                    .type(ResponseType.CLIENT_ERROR)
+                    .build();
         }
         if (event instanceof ControlledEvent) {
             final ControlledEvent controlledEvent = (ControlledEvent) (event);
             if (controlledEvent.getRequestedAttendees().contains(attendee)) {
-                ResponseMessage.builder().messageType(ResponseMessageType.CLIENT_ERROR).message("You have already requested to join this event.").build();
+                return ResponseMessage.builder()
+                        .type(ResponseType.CLIENT_ERROR).message("You have already requested to join this event.")
+                        .build();
             }
             controlledEvent.getRequestedAttendees().add(attendee);
             eventDao.update(controlledEvent);
-            List<User> admins = userDao.findByTypeAndAbove(controlledEvent.getControlledBy());
-            notificationDao.notify(user.getUsername() + " has requested to join the event: " + controlledEvent.getName(), NotificationType.MESSAGE, admins);
-            return ResponseMessage.builder().message(user.getUsername() + " has requested to join the event: " + controlledEvent.getName()).messageType(ResponseMessageType.ACCEPTED).build();
+            final List<User> admins = userDao.findByTypeAndAbove(controlledEvent.getControlledBy());
+            notificationDao.notifyUsers(user.getUsername() + " has requested to join the event: " + controlledEvent.getName(), NotificationType.MESSAGE, admins);
+            return ResponseMessage.builder()
+                    .message(user.getUsername() + " has requested to join the event: " + controlledEvent.getName())
+                    .type(ResponseType.ACCEPTED)
+                    .build();
         } else {
             event.getAttendees().add(attendee);
             eventDao.update(event);
-            return ResponseMessage.builder().messageType(ResponseMessageType.SUCCESSFUL).message("Added " + user.getUsername() + " to the event: " + event.getName()).build();
+            return ResponseMessage.builder()
+                    .type(ResponseType.SUCCESSFUL)
+                    .message("Added " + user.getUsername() + " to the event: " + event.getName())
+                    .build();
 
         }
     }
 
-    public ResponseMessage addUserToControlledEvent(String eventId, String userId, final Optional<User> controllerUser) {
-        return addUserToControlledEvent(eventId, userId, controllerUser, 0);
+    public AttendeeSet getAttendees(String eventId, Optional<User> loggedInUser) {
+        Event event = evaluateEvent(eventId);
+        evaluateUserIsAuthorized(loggedInUser, UserType.ISA_MEMBER);
+        return event.getAttendees();
     }
 
-    public ResponseMessage addUserToControlledEvent(String eventId, String userId, final Optional<User> controllerUser, int plus) {
 
-        final Optional<Event> event = eventDao.findById(eventId);
+    public ResponseMessage addUserToControlledEvent(final String eventId, final String userId, final Optional<User> loggedInUser, final int plus) {
+
+        final Event event = evaluateEvent(eventId);
         final Optional<User> userToAdd = userDao.findByString(userId);
-        if (!event.isPresent() || !userToAdd.isPresent()) {
-            return ResponseMessage.builder().message("Event or User doesn't exist!").messageType(ResponseMessageType.CLIENT_ERROR).build();
+        final User controllerUser = evaluateUserLoggedIn(loggedInUser);
+
+        if (!userToAdd.isPresent()) {
+            return ResponseMessage.builder()
+                    .message("User doesn't exist!")
+                    .type(ResponseType.NOT_FOUND)
+                    .build();
         }
-        if (!controllerUser.isPresent()) {
-            return ResponseMessage.builder().message("You must be logged in to use this function!").messageType(ResponseMessageType.CLIENT_ERROR).build();
 
+        if (event.getAttendees().contains(Attendee.of(userToAdd.get().getId(), null))) {
+            return ResponseMessage.builder()
+                    .message("Event is already being attended by this user.")
+                    .type(ResponseType.CLIENT_ERROR)
+                    .build();
         }
+        if (event instanceof ControlledEvent) {
+            ControlledEvent controlledEvent = (ControlledEvent) event;
+            evaluateUserIsAuthorized(controllerUser, controlledEvent.getControlledBy());
 
-        if (event.get().getAttendees().contains(Attendee.of(userToAdd.get().getId(), null))) {
-            return ResponseMessage.builder().message("Event is already being attended by this user.").messageType(ResponseMessageType.CLIENT_ERROR).build();
-        }
-        if (event.get() instanceof ControlledEvent) {
-            ControlledEvent controlledEvent = (ControlledEvent) event.get();
-            if (controlledEvent.getControlledBy().equals(controllerUser.get().getType()) ||
-                    controlledEvent.getControlledBy().getRanksAbove().contains(controllerUser.get().getType())) {
-                Optional<Attendee> attendee = controlledEvent.getRequestedAttendees().getAttendee(userToAdd.get());
+            Optional<Attendee> attendee = controlledEvent.getRequestedAttendees().getAttendee(userToAdd.get());
 
-                if (!attendee.isPresent()) {
-                    controlledEvent.getAttendees().add(Attendee.of(userToAdd.get().getId(), Calendar.getInstance().getTime(), plus));
-                } else {
-                    attendee.get().setPlus(plus);
-                    controlledEvent.getAttendees().add(attendee.get());
-                    controlledEvent.getRequestedAttendees().remove(attendee.get());
-                }
-                eventDao.update(controlledEvent);
-                return ResponseMessage.builder().messageType(ResponseMessageType.ACCEPTED).message(userToAdd.get().getUsername() + " is now attending the event: " + event.get().getName()).build();
-
+            if (!attendee.isPresent()) {
+                controlledEvent.getAttendees().add(Attendee.of(userToAdd.get().getId(), Calendar.getInstance().getTime(), plus));
+            } else {
+                attendee.get().setPlus(plus);
+                controlledEvent.getAttendees().add(attendee.get());
+                controlledEvent.getRequestedAttendees().remove(attendee.get());
             }
-            return ResponseMessage.builder().messageType(ResponseMessageType.UNAUTHORIZED).message("You are not allowed to permit users to this event!").build();
+            eventDao.update(controlledEvent);
+            return ResponseMessage.builder().type(ResponseType.ACCEPTED)
+                    .message(userToAdd.get().getUsername() + " is now attending the event: " + event.getName())
+                    .build();
         } else {
-            return addUserToEvent(event.get(), userToAdd.get());
+            return addUserToEvent(event, userToAdd.get());
+        }
+    }
+
+    public ResponseMessage updateEvent(final String id, final EventDTO updated, final Optional<User> loggedInUser) {
+        Event original = evaluateEvent(id);
+        evaluateUserIsAuthorized(loggedInUser, UserType.ISA_ADMIN);
+
+        updateEvent(original, updated);
+        return ResponseMessage.builder()
+                .type(ResponseType.SUCCESSFUL).message("Updated the event: " + original.getName())
+                .property("new_event", original)
+                .build();
+    }
+
+    public ResponseMessage createEvent(final Event event, final Optional<User> userLoggedIn) {
+        evaluateUserIsAuthorized(userLoggedIn, UserType.ISA_ADMIN);
+
+        if (event.getSlug() == null) {
+            event.setSlugToName();
+        }
+        eventDao.create(event);
+
+        return ResponseMessage.builder()
+                .type(ResponseType.SUCCESSFUL)
+                .property("event_id", event.getId())
+                .property("event_name", event.getName())
+                .message("Successfully created an event")
+                .build();
+
+    }
+
+    public Optional<EventDTO> getEvent(final String id, final Optional<User> loggedInUser) {
+        Event event = evaluateEvent(id);
+        User user = evaluateUserLoggedIn(loggedInUser);
+        if (user.isAuthorative()) {
+            return Optional.of(new CompleteEventDTO(event));
+        } else {
+            return Optional.of(new EventDTO(event));
+        }
+    }
+
+    public ResponseMessage processPayment(final String paymentId) throws IOException {
+        final ResponseOrError<Payment> payment = mollieClient.payments().get(paymentId);
+
+        if (payment.getData().getStatus().equals("paid")) {
+            final Optional<Event> event = eventDao.findById((String) payment.getData().getMetadata().get("event_id"));
+            final Optional<User> user = userDao.findById((String) payment.getData().getMetadata().get("user_id"));
+
+            final Integer plus = Optional.of(Integer.valueOf((String) payment.getData().getMetadata().get("plus"))).orElse(0);
+            if (event.isPresent() && user.isPresent()) {
+                if (event.get() instanceof PayedEvent) {
+                    PayedEvent payedEvent = (PayedEvent) event.get();
+                    Attendee attendee = Attendee.of(user.get().getId(), Calendar.getInstance().getTime(), plus);
+                    payedEvent.getAttendees().add(attendee);
+                    payedEvent.getRequestedAttendees().remove(attendee);
+                    payedEvent.getPayments().add(new EventPayment(user.get().getId(), paymentId));
+
+                    eventDao.update(payedEvent);
+                    return ResponseMessage.builder()
+                            .message("Successfully added user to the event.")
+                            .type(ResponseType.SUCCESSFUL)
+                            .build();
+                } else {
+                    return ResponseMessage.builder()
+                            .message("Not a payed event!")
+                            .type(ResponseType.NOT_FOUND)
+                            .build();
+                }
+            } else {
+                return ResponseMessage.builder()
+                        .message("Event or user doesn't exist!")
+                        .type(ResponseType.NOT_FOUND)
+                        .build();
+            }
+        } else {
+            return ResponseMessage.builder()
+                    .message("Method not yet supported")
+                    .type(ResponseType.CLIENT_ERROR)
+                    .build();
+        }
+    }
+
+    public ResponseMessage newPayment(final String eventId, final String redirectUrl, int plus, final String paymentWebhook, final Optional<User> userOptional) throws IOException {
+
+        User user = evaluateUserLoggedIn(userOptional);
+        Event event = evaluateEvent(eventId);
+        if (plus < 0) {
+            plus = 0;
+        }
+        if (event instanceof PayedEvent) {
+            if (!event.getAttendees().containsUser(user)) {
+                PayedEvent payedEvent = (PayedEvent) event;
+                final Map<String, Object> metaData = new HashMap<>();
+                metaData.put("user_id", user.getId());
+                metaData.put("event_id", event.getId());
+                metaData.put("plus", plus);
+                @SuppressWarnings("ConstantConditions") CreatePayment createPayment = new CreatePayment(null, event.getPrice().doubleValue() * (plus + 1), String.format("ISA Event: %s", event.getName()), redirectUrl, Optional.of(paymentWebhook), metaData);
+                ResponseOrError<Payment> paymentResponse = mollieClient.payments().create(createPayment);
+                if (paymentResponse.getError() == null) {
+                    payedEvent.getRequestedAttendees().add(Attendee.of(user.getId(), Calendar.getInstance().getTime()));
+                    eventDao.update(payedEvent);
+                    return ResponseMessage.builder()
+                            .message("Successfully created payment.")
+                            .property("paymentUrl", paymentResponse.getData().getLinks().getPaymentUrl())
+                            .type(ResponseType.REDIRECT).build();
+                } else {
+                    return ResponseMessage.builder()
+                            .message("Error processing payment!")
+                            .properties(paymentResponse.getError())
+                            .type(ResponseType.SERVER_ERROR)
+                            .build();
+                }
+            } else {
+                return ResponseMessage.builder()
+                        .message("Account is already attending this event!")
+                        .type(ResponseType.CLIENT_ERROR)
+                        .build();
+            }
+        } else {
+            return ResponseMessage.builder()
+                    .message("This event does not support online payments!")
+                    .type(ResponseType.NOT_FOUND)
+                    .build();
         }
 
+
+    }
+
+    public ResponseMessage deleteEvent(final String id, final Optional<User> user) {
+        Event event = evaluateEvent(id);
+        evaluateUserIsAuthorized(user, UserType.ISA_ADMIN);
+        eventDao.delete(event);
+        return ResponseMessage.builder()
+                .message("Deleted event: " + event.getName())
+                .type(ResponseType.SUCCESSFUL)
+                .build();
+    }
+
+    public List<EventDTO> getAll(final Boolean includePast, final Optional<User> loggedInUser) {
+        List<EventDTO> eventList = new ArrayList<>();
+        Optional<Boolean> includePastEvents = Optional.ofNullable(includePast);
+        EventList eventSet = includePastEvents.isPresent() && includePastEvents.get() ? eventDao.getAll() : eventDao.getAll().filterOutPastEvents();
+        eventSet.forEach((event -> {
+            if (loggedInUser.isPresent() && loggedInUser.get().isAuthorative()) {
+                eventList.add(new CalculatedEventDTO(event));
+            } else {
+                eventList.add(new EventDTO(event));
+            }
+        }));
+
+
+        return eventList;
+    }
+
+    private void updateEvent(final Event old, final EventDTO updated) {
+        if (updated.getName() != null)
+            old.setName(updated.getName());
+        if (updated.getDescription() != null)
+            old.setDescription(updated.getDescription());
+        if (updated.getMainImage() != null)
+            old.setMainImage(updated.getMainImage());
+        if (updated.getPrice() != null)
+            old.setPrice(updated.getPrice());
+        if (updated.getPriority() != null)
+            old.setPriority(updated.getPriority());
+        if (updated.getProperties() != null)
+            old.getProperties().putAll(updated.getProperties());
+
+        eventDao.update(old);
     }
 }

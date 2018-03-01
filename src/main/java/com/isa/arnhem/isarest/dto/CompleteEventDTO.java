@@ -2,9 +2,9 @@ package com.isa.arnhem.isarest.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.isa.arnhem.isarest.models.AttendeeSet;
-import com.isa.arnhem.isarest.models.ControlledEvent;
-import com.isa.arnhem.isarest.models.Event;
+import com.isa.arnhem.isarest.models.event.ControlledEvent;
+import com.isa.arnhem.isarest.models.event.Event;
+import com.isa.arnhem.isarest.models.user.AttendeeSet;
 import lombok.Getter;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)

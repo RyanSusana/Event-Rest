@@ -6,23 +6,13 @@ import org.jongo.FindOne;
 import org.jongo.Jongo;
 
 public abstract class CrudDao<T extends Identifiable> extends Dao implements Crud<T> {
-    public CrudDao(Jongo jongo, String collectionName) {
+    CrudDao(Jongo jongo, String collectionName) {
         super(jongo, collectionName);
     }
 
     @Override
     public void create(T... items) {
         getCollection().insert(items);
-    }
-
-    @Override
-    public void delete(String query, Object... params) {
-        getCollection().remove(query, params);
-    }
-
-    @Override
-    public void delete(String query) {
-        getCollection().remove(query);
     }
 
     @Override

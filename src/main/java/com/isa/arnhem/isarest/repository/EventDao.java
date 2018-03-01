@@ -1,7 +1,7 @@
 package com.isa.arnhem.isarest.repository;
 
-import com.isa.arnhem.isarest.models.Event;
-import com.isa.arnhem.isarest.models.EventList;
+import com.isa.arnhem.isarest.models.event.Event;
+import com.isa.arnhem.isarest.models.event.EventList;
 import org.jongo.Jongo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -20,7 +20,7 @@ public class EventDao extends CrudDao<Event> {
         return Optional.ofNullable(findOne("{_id: #}", eventId).as(Event.class));
     }
 
-    public Optional<Event> findBySlug(String slug) {
+    private Optional<Event> findBySlug(String slug) {
         return Optional.ofNullable(findOne("{slug: #, date: {$gt: #}}", slug, EventList.getYesterday().getTime()).as(Event.class));
     }
 
@@ -36,9 +36,7 @@ public class EventDao extends CrudDao<Event> {
 
     public EventList getAll() {
         final EventList events = new EventList();
-        find().as(Event.class).iterator().forEachRemaining(event -> {
-            events.add(event);
-        });
+        find().as(Event.class).iterator().forEachRemaining(events::add);
         return events;
     }
 }

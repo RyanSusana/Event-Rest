@@ -7,9 +7,9 @@ import org.jongo.Jongo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Repository
 public class LogDao extends CrudDao<Log> {
@@ -42,7 +42,7 @@ public class LogDao extends CrudDao<Log> {
     }
 
     public Set<Log> getAll() {
-        return Lists.newArrayList(find().as(Log.class).iterator()).stream().collect(Collectors.toSet());
+        return new HashSet<>(Lists.newArrayList(find().as(Log.class).iterator()));
     }
 
 

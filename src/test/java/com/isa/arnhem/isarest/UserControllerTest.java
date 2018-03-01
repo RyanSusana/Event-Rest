@@ -1,33 +1,32 @@
 package com.isa.arnhem.isarest;
 
 import com.isa.arnhem.isarest.controllers.UserController;
-import com.isa.arnhem.isarest.models.ResponseMessage;
-import com.isa.arnhem.isarest.models.ResponseMessageType;
-import com.isa.arnhem.isarest.models.User;
-import com.isa.arnhem.isarest.models.UserType;
+import com.isa.arnhem.isarest.dto.ResponseMessage;
+import com.isa.arnhem.isarest.dto.ResponseType;
+import com.isa.arnhem.isarest.models.user.User;
+import com.isa.arnhem.isarest.models.user.UserType;
 import com.isa.arnhem.isarest.repository.EventDao;
 import com.isa.arnhem.isarest.repository.NotificationDao;
 import com.isa.arnhem.isarest.repository.UserDao;
 import com.isa.arnhem.isarest.services.UserService;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import static org.junit.Assert.assertEquals;
 
 public class UserControllerTest extends BaseIntegrationTest {
 
-    UserController userController;
-    UserDao userDao;
-    User testSubject;
+    private UserController userController;
+    private UserDao userDao;
+    private User testSubject;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         EventDao eventDao = new EventDao(getJongo());
         userDao = new UserDao(getJongo());
         NotificationDao notificationDao = new NotificationDao(getJongo());
-        UserService userService = new UserService(userDao, eventDao);
-        userController = new UserController(userService, new BCryptPasswordEncoder());
+        UserService userService = new UserService(null, null);
+        userController = new UserController(userService);
         User ryan = new User("Ryan", "ryansusana@live.co", "testword", UserType.ISA_MEMBER);
         userDao.create(ryan);
         testSubject = userDao.findByUsername("Ryan").get();
@@ -40,7 +39,7 @@ public class UserControllerTest extends BaseIntegrationTest {
 
         ResponseMessage message = userController.addUser(ryan).getBody();
 
-        assertEquals(200, message.getMessageType().getStatus());
+        assertEquals(200, message.getType().getStatus());
 
     }
 
@@ -51,7 +50,7 @@ public class UserControllerTest extends BaseIntegrationTest {
 
         ResponseMessage message = userController.addUser(ryan).getBody();
 
-        assertEquals(ResponseMessageType.CLIENT_ERROR, message.getMessageType());
+        assertEquals(ResponseType.CLIENT_ERROR, message.getType());
 
     }
 
@@ -62,7 +61,7 @@ public class UserControllerTest extends BaseIntegrationTest {
 
         ResponseMessage message = userController.addUser(ryan).getBody();
 
-        assertEquals(ResponseMessageType.CLIENT_ERROR, message.getMessageType());
+        assertEquals(ResponseType.CLIENT_ERROR, message.getType());
 
     }
 
@@ -73,7 +72,7 @@ public class UserControllerTest extends BaseIntegrationTest {
 
         ResponseMessage message = userController.addUser(ryan).getBody();
 
-        assertEquals(ResponseMessageType.CLIENT_ERROR, message.getMessageType());
+        assertEquals(ResponseType.CLIENT_ERROR, message.getType());
 
     }
 
@@ -84,7 +83,7 @@ public class UserControllerTest extends BaseIntegrationTest {
 
         ResponseMessage message = userController.addUser(ryan).getBody();
 
-        assertEquals(ResponseMessageType.CLIENT_ERROR, message.getMessageType());
+        assertEquals(ResponseType.CLIENT_ERROR, message.getType());
 
     }
 
@@ -95,7 +94,7 @@ public class UserControllerTest extends BaseIntegrationTest {
 
         ResponseMessage message = userController.addUser(ryan).getBody();
 
-        assertEquals(ResponseMessageType.CLIENT_ERROR, message.getMessageType());
+        assertEquals(ResponseType.CLIENT_ERROR, message.getType());
 
     }
 

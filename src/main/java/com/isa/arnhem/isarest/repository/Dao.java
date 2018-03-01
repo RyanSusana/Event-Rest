@@ -1,11 +1,13 @@
 package com.isa.arnhem.isarest.repository;
 
+import lombok.Getter;
 import org.jongo.Jongo;
 import org.jongo.MongoCollection;
 
 
 public abstract class Dao {
     private final Jongo jongo;
+    @Getter
     private final String collectionName;
 
 
@@ -14,7 +16,7 @@ public abstract class Dao {
         this.jongo = jongo;
     }
 
-    public MongoCollection getCollection() {
+    MongoCollection getCollection() {
         return jongo.getCollection(collectionName);
     }
 

@@ -1,8 +1,8 @@
 package com.isa.arnhem.isarest.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.isa.arnhem.isarest.models.Attendee;
-import com.isa.arnhem.isarest.models.Event;
+import com.isa.arnhem.isarest.models.event.Event;
+import com.isa.arnhem.isarest.models.user.Attendee;
 import lombok.Getter;
 
 @Getter
@@ -20,7 +20,7 @@ public class CalculatedEventDTO extends EventDTO {
     }
 
 
-    public int getTotalParticipants(Iterable<Attendee> attendees) {
+    private int getTotalParticipants(Iterable<Attendee> attendees) {
         int result = 0;
         for (Attendee attendee : attendees) {
             result += 1;

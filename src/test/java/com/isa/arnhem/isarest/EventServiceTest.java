@@ -142,7 +142,7 @@ public class EventServiceTest {
 
         event = eventService.getEvent("payed", Optional.of(ryan));
 
-        assertFalse(event.get() instanceof CompleteEventDTO);
+        assertFalse(event.isPresent() && event.get() instanceof CompleteEventDTO);
 
     }
 

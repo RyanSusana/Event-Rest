@@ -1,9 +1,6 @@
 package com.isa.arnhem.isarest.services;
 
-import com.isa.arnhem.isarest.dto.AttendedEventDTO;
-import com.isa.arnhem.isarest.dto.ResponseMessage;
-import com.isa.arnhem.isarest.dto.ResponseType;
-import com.isa.arnhem.isarest.dto.ReturnedObject;
+import com.isa.arnhem.isarest.dto.*;
 import com.isa.arnhem.isarest.models.event.Event;
 import com.isa.arnhem.isarest.models.event.EventList;
 import com.isa.arnhem.isarest.models.user.User;
@@ -11,8 +8,6 @@ import com.isa.arnhem.isarest.models.user.UserType;
 import com.isa.arnhem.isarest.repository.DaoRepository;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -43,25 +38,25 @@ public class UserService extends BaseService {
         Optional<Integer> limit = Optional.ofNullable(l);
         Optional<Event> event = eventId == null ? Optional.empty() : eventDao.findByString(eventId);
 
+        User user = evaluateUserIsLoggedIn(loggedInUser);
+
         final Collection<User> result;
         result = searchTerm.map(userDao::search).orElseGet(userDao::getAll);
 
-        if (event.isPresent() && loggedInUser.isPresent() && loggedInUser.get().isAuthorative()) {
-
+        if (event.isPresent() && user.isAuthorative()) {
             result.retainAll(event.get().getAttendees());
         }
         if (limit.isPresent()) {
             List<User> newResult = new ArrayList<>();
             int current = 0;
-            for (User user : result) {
+            for (User u : result) {
                 if (current >= limit.get()) {
                     break;
                 }
-                newResult.add(user);
+                newResult.add(u);
                 current++;
             }
             return newResult;
-
 
         } else {
             return result;
@@ -83,16 +78,12 @@ public class UserService extends BaseService {
         }
         if (userDao.findByEmail(user.getEmail()).isPresent()) {
             return ResponseMessage.builder().message("This e-mail address is already in use!").type(ResponseType.CLIENT_ERROR).build();
-
         }
-
         int passwordLength = user.getPassword().length();
 
         if (passwordLength < 5 || passwordLength > 50) {
             return ResponseMessage.builder().message("Password must be between 4 and 50 characters long").type(ResponseType.CLIENT_ERROR).build();
-
         }
-
         user.setType(UserType.STUDENT);
         user.setActivated(false);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -102,20 +93,18 @@ public class UserService extends BaseService {
 
 
     public User getSelfUser(Optional<User> loggedInUser) {
-        User user = loggedInUser.get();
-        user.setPassword(null);
-        return user;
+        try {
+            return evaluateUserIsLoggedIn(loggedInUser);
+        }catch (ResponseException e){
+            throw ResponseException.builder().type(ResponseType.UNAUTHORIZED).message("Incorrect username/password.").build();
+        }
     }
 
     public Iterable<UserType> getRanks(Optional<User> loggedInUser) {
-
         if (loggedInUser.isPresent() && loggedInUser.get().isAuthorative()) {
             return loggedInUser.get().getType().getRanksBelow();
-
         }
         return new ArrayList<>();
-
-
     }
 
     public ResponseMessage updateRank(String userId, String rank, Optional<User> loggedInUser) {
@@ -182,17 +171,14 @@ public class UserService extends BaseService {
         return eventMap;
     }
 
-    public ResponseEntity<String> activateUser(String id) {
-        User user = userDao.findById(id).get();
-        if (user == null) {
-            return new ResponseEntity<>("Cannot find user with id: " + id, HttpStatus.NOT_FOUND);
-        }
+    public ResponseMessage activateUser(String id) {
+        User user = evaluateUserIsLoggedIn(id);
         if (!user.isActivated()) {
             user.setActivated(true);
             userDao.update(user);
-            return new ResponseEntity<>("Activated: " + user.getUsername(), HttpStatus.ACCEPTED);
+            return ResponseMessage.builder().type(ResponseType.SUCCESSFUL).message("Activated: " + user.getUsername()).build();
         } else {
-            return new ResponseEntity<>(user.getUsername() + " is already activated!", HttpStatus.FORBIDDEN);
+            return ResponseMessage.builder().type(ResponseType.CLIENT_ERROR).message(user.getUsername() + " is already activated!").build();
         }
     }
 
@@ -202,11 +188,12 @@ public class UserService extends BaseService {
 
     private String evaluateUsername(String username) {
 
-        if (username.startsWith(".") || username.endsWith(".")) {
-            return "Username can't begin or end with a dot!";
-        }
         if (username == null || username.isEmpty()) {
             return "Username can't be empty!";
+        }
+
+        if (username.startsWith(".") || username.endsWith(".")) {
+            return "Username can't begin or end with a dot!";
         }
 
         Pattern p = Pattern.compile("[^a-z0-9._ ]", Pattern.CASE_INSENSITIVE);

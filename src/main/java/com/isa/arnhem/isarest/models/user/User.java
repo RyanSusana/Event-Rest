@@ -19,6 +19,9 @@ public class User implements Identifiable {
 
     private String id;
 
+    @JsonProperty("temp_id")
+    private String tempId;
+
     @JsonProperty("username")
     private String username;
     @JsonProperty("email")
@@ -85,6 +88,5 @@ public class User implements Identifiable {
     public int hashCode() {
         return Objects.hash(this.getId());
     }
-
 
 }

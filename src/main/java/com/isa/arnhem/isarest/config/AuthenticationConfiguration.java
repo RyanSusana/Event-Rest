@@ -2,7 +2,6 @@ package com.isa.arnhem.isarest.config;
 
 import com.isa.arnhem.isarest.models.user.UserType;
 import com.isa.arnhem.isarest.services.UserDetailService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -18,12 +17,15 @@ import java.util.List;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @EnableWebSecurity
 @Configuration
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class AuthenticationConfiguration extends WebSecurityConfigurerAdapter {
-
+    @Autowired
     private UserDetailService userDetailsService;
 
+    @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private CustomAuthenticationEntrypoint customAuthenticationEntrypoint;
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
@@ -42,10 +44,11 @@ public class AuthenticationConfiguration extends WebSecurityConfigurerAdapter {
         http.sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
+
         http.csrf().disable();
         http.authorizeRequests()
-                .antMatchers("/api/**/secured/**").hasAnyRole(rankArray)
+                .antMatchers("/**").permitAll()
                 .and()
-                .httpBasic();
+                .httpBasic().authenticationEntryPoint(customAuthenticationEntrypoint);
     }
 }

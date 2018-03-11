@@ -20,5 +20,8 @@ public class ControlledEvent extends Event {
     @JsonProperty("requested_attendees")
     private AttendeeSet requestedAttendees = new AttendeeSet();
 
+    @JsonProperty("checked_in_attendees")
+    private AttendeeSet checkedInAttendees = new AttendeeSet();
+
 
 }

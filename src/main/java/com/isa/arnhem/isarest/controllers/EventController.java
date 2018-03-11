@@ -2,7 +2,7 @@ package com.isa.arnhem.isarest.controllers;
 
 
 import com.isa.arnhem.isarest.dto.EventDTO;
-import com.isa.arnhem.isarest.dto.ResponseMessage;
+import com.isa.arnhem.isarest.dto.Response;
 import com.isa.arnhem.isarest.dto.ReturnedObject;
 import com.isa.arnhem.isarest.models.event.Event;
 import com.isa.arnhem.isarest.models.user.AttendeeSet;
@@ -11,7 +11,6 @@ import com.isa.arnhem.isarest.services.EventService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -30,19 +29,17 @@ public class EventController extends SecuredController {
 
     @GetMapping
     public @ResponseBody
-    List<EventDTO> getAll(@RequestParam(value = "includePast", defaultValue = "false", required = false) Boolean includePast) {
+    List<EventDTO> getAll(@RequestParam(value = "includePast", defaultValue = "false", required = false) Boolean includePast, HttpServletRequest request) {
         return eventService.getAll(includePast, getLoggedInUser());
     }
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ResponseMessage> addEvent(@RequestBody Event event) {
+    public ResponseEntity<Response> addEvent(@RequestBody Event event) {
         return eventService.createEvent(event, getLoggedInUser()).toResponseEntity();
     }
 
     @RequestMapping(path = "/{id}", method = RequestMethod.PUT)
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ResponseMessage> updateEvent(@PathVariable("id") String id, @RequestBody EventDTO updated) {
+    public ResponseEntity<Response> updateEvent(@PathVariable("id") String id, @RequestBody EventDTO updated) {
         return eventService.updateEvent(id, updated, getLoggedInUser()).toResponseEntity();
     }
 
@@ -53,15 +50,13 @@ public class EventController extends SecuredController {
     }
 
     @RequestMapping(path = "/{id}", method = RequestMethod.DELETE)
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ResponseMessage> deleteEvent(@PathVariable("id") String id) {
+    public ResponseEntity<Response> deleteEvent(@PathVariable("id") String id) {
         return eventService.deleteEvent(id, getLoggedInUser()).toResponseEntity();
     }
 
 
     @RequestMapping(path = "/{id}/attendees", method = RequestMethod.POST)
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ResponseMessage> addAttendee(@PathVariable("id") String eventId, @RequestParam("userId") String userId, @RequestParam(value = "controlled", required = false) Boolean controlled, @RequestParam(value = "plus", required = false) Integer _plus) {
+    public ResponseEntity<Response> addAttendee(@PathVariable("id") String eventId, @RequestParam("userId") String userId, @RequestParam(value = "controlled", required = false) Boolean controlled, @RequestParam(value = "plus", required = false) Integer _plus) {
         if (controlled != null && controlled) {
             return eventService.addUserToEvent(eventId, userId).toResponseEntity();
         }
@@ -75,15 +70,13 @@ public class EventController extends SecuredController {
     }
 
     @RequestMapping(path = "/payment-webhook", method = RequestMethod.POST)
-    public ResponseEntity<ResponseMessage> paymentWebhook(@RequestParam("id") String paymentId) throws IOException {
+    public ResponseEntity<Response> paymentWebhook(@RequestParam("id") String paymentId) throws IOException {
         return eventService.processPayment(paymentId).toResponseEntity();
     }
 
     @RequestMapping(path = "/{id}/pay", method = RequestMethod.POST)
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ResponseMessage> createPayment(@PathVariable("id") String eventId, @RequestParam String redirectUrl, @RequestParam(required = false, defaultValue = "0") int plus, HttpServletRequest request) throws IOException {
-        String paymentWebhook = request.getScheme() + "://" + request.getHeader("host") + "/api/events/payment-webhook";
-        System.out.println(paymentWebhook);
+    public ResponseEntity<Response> createPayment(@PathVariable("id") String eventId, @RequestParam String redirectUrl, @RequestParam(required = false, defaultValue = "0") int plus, HttpServletRequest request) throws IOException {
+        String paymentWebhook = "https://" + request.getHeader("host") + (request.getHeader("host").contains("8086") ? "" : ":8086") + "/api/events/payment-webhook";
         if (paymentWebhook.contains("localhost")) {
             paymentWebhook = "https://google.com/";
         }
@@ -91,19 +84,22 @@ public class EventController extends SecuredController {
     }
 
     @RequestMapping(path = "/{id}/attendees", method = RequestMethod.DELETE)
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ResponseMessage> removeAttendee(@PathVariable("id") String eventId, @RequestParam String userId) {
+    public ResponseEntity<Response> removeAttendee(@PathVariable("id") String eventId, @RequestParam String userId) {
         return eventService.removeUserFromEvent(eventId, userId).toResponseEntity();
     }
 
+    @RequestMapping(path = "/{id}/check-in", method = RequestMethod.PUT)
+    public ResponseEntity<Response> checkInEvent(@PathVariable("id") String eventId, @RequestParam String userId, @RequestParam(value = "test", required = false, defaultValue = "false") boolean test) {
+        return eventService.checkInEvent(userId, eventId, getLoggedInUser(), test).toResponseEntity();
+    }
+
     @RequestMapping(path = "/{id}/attendees", method = RequestMethod.GET)
-    @PreAuthorize("isAuthenticated()")
     public @ResponseBody
     AttendeeSet getAttendees(@PathVariable("id") String eventId) {
         return eventService.getAttendees(eventId, getLoggedInUser());
     }
 
-    private ResponseEntity<ResponseMessage> addUserToControlledEvent(String eventId, String userId, Optional<User> controllerUser, int plus) {
+    private ResponseEntity<Response> addUserToControlledEvent(String eventId, String userId, Optional<User> controllerUser, int plus) {
         return eventService.addUserToControlledEvent(eventId, userId, controllerUser, plus).toResponseEntity();
     }
 

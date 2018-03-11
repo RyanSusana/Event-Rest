@@ -32,36 +32,27 @@ public class EventService extends BaseService {
 
 
     public ResponseMessage addUserToEvent(final String eventId, final String userId) {
-        final User user = evaluateUserLoggedIn(userId);
+        final User user = evaluateUserIsLoggedIn(userId);
         final Event event = evaluateEvent(eventId);
 
         return addUserToEvent(event, user);
     }
 
     public ResponseMessage removeUserFromEvent(final String eventId, final String userId) {
-        final User user = evaluateUserLoggedIn(userId);
+        final User user = evaluateUserIsLoggedIn(userId);
         final Event event = evaluateEvent(eventId);
 
         Attendee attendee = Attendee.of(userId, Calendar.getInstance().getTime());
 
         if (!event.getAttendees().contains(attendee)) {
-            return ResponseMessage.builder()
-                    .message("Event is already not being attended by this user.")
-                    .type(ResponseType.CLIENT_ERROR)
-                    .build();
+            return ResponseMessage.builder().message("Event is already not being attended by this user.").type(ResponseType.CLIENT_ERROR).build();
         } else {
             if (event instanceof PayedEvent) {
-                return ResponseMessage.builder()
-                        .message("You have already payed for this event, refunds are not allowed.")
-                        .type(ResponseType.CLIENT_ERROR)
-                        .build();
+                return ResponseMessage.builder().message("You have already payed for this event, refunds are not allowed.").type(ResponseType.CLIENT_ERROR).build();
             } else {
                 event.getAttendees().remove(attendee);
                 eventDao.update(event);
-                return ResponseMessage.builder()
-                        .message("Removed " + user.getUsername() + " from the event: " + event.getName())
-                        .type(ResponseType.SUCCESSFUL)
-                        .build();
+                return ResponseMessage.builder().message("Removed " + user.getUsername() + " from the event: " + event.getName()).type(ResponseType.SUCCESSFUL).build();
             }
         }
     }
@@ -70,33 +61,22 @@ public class EventService extends BaseService {
         final Attendee attendee = Attendee.of(user.getId(), Calendar.getInstance().getTime());
 
         if (event.getAttendees().contains(attendee)) {
-            return ResponseMessage.builder()
-                    .message("Event is already being attended by this user.")
-                    .type(ResponseType.CLIENT_ERROR)
-                    .build();
+            return ResponseMessage.builder().message("Event is already being attended by this user.").type(ResponseType.CLIENT_ERROR).build();
         }
         if (event instanceof ControlledEvent) {
             final ControlledEvent controlledEvent = (ControlledEvent) (event);
             if (controlledEvent.getRequestedAttendees().contains(attendee)) {
-                return ResponseMessage.builder()
-                        .type(ResponseType.CLIENT_ERROR).message("You have already requested to join this event.")
-                        .build();
+                return ResponseMessage.builder().type(ResponseType.CLIENT_ERROR).message("You have already requested to join this event.").build();
             }
             controlledEvent.getRequestedAttendees().add(attendee);
             eventDao.update(controlledEvent);
             final List<User> admins = userDao.findByTypeAndAbove(controlledEvent.getControlledBy());
             notificationDao.notifyUsers(user.getUsername() + " has requested to join the event: " + controlledEvent.getName(), NotificationType.MESSAGE, admins);
-            return ResponseMessage.builder()
-                    .message(user.getUsername() + " has requested to join the event: " + controlledEvent.getName())
-                    .type(ResponseType.ACCEPTED)
-                    .build();
+            return ResponseMessage.builder().message(user.getUsername() + " has requested to join the event: " + controlledEvent.getName()).type(ResponseType.ACCEPTED).build();
         } else {
             event.getAttendees().add(attendee);
             eventDao.update(event);
-            return ResponseMessage.builder()
-                    .type(ResponseType.SUCCESSFUL)
-                    .message("Added " + user.getUsername() + " to the event: " + event.getName())
-                    .build();
+            return ResponseMessage.builder().type(ResponseType.SUCCESSFUL).message("Added " + user.getUsername() + " to the event: " + event.getName()).build();
 
         }
     }
@@ -112,20 +92,14 @@ public class EventService extends BaseService {
 
         final Event event = evaluateEvent(eventId);
         final Optional<User> userToAdd = userDao.findByString(userId);
-        final User controllerUser = evaluateUserLoggedIn(loggedInUser);
+        final User controllerUser = evaluateUserIsLoggedIn(loggedInUser);
 
         if (!userToAdd.isPresent()) {
-            return ResponseMessage.builder()
-                    .message("User doesn't exist!")
-                    .type(ResponseType.NOT_FOUND)
-                    .build();
+            return ResponseMessage.builder().message("User doesn't exist!").type(ResponseType.NOT_FOUND).build();
         }
 
         if (event.getAttendees().contains(Attendee.of(userToAdd.get().getId(), null))) {
-            return ResponseMessage.builder()
-                    .message("Event is already being attended by this user.")
-                    .type(ResponseType.CLIENT_ERROR)
-                    .build();
+            return ResponseMessage.builder().message("Event is already being attended by this user.").type(ResponseType.CLIENT_ERROR).build();
         }
         if (event instanceof ControlledEvent) {
             ControlledEvent controlledEvent = (ControlledEvent) event;
@@ -141,9 +115,7 @@ public class EventService extends BaseService {
                 controlledEvent.getRequestedAttendees().remove(attendee.get());
             }
             eventDao.update(controlledEvent);
-            return ResponseMessage.builder().type(ResponseType.ACCEPTED)
-                    .message(userToAdd.get().getUsername() + " is now attending the event: " + event.getName())
-                    .build();
+            return ResponseMessage.builder().type(ResponseType.ACCEPTED).message(userToAdd.get().getUsername() + " is now attending the event: " + event.getName()).build();
         } else {
             return addUserToEvent(event, userToAdd.get());
         }
@@ -154,10 +126,7 @@ public class EventService extends BaseService {
         evaluateUserIsAuthorized(loggedInUser, UserType.ISA_ADMIN);
 
         updateEvent(original, updated);
-        return ResponseMessage.builder()
-                .type(ResponseType.SUCCESSFUL).message("Updated the event: " + original.getName())
-                .property("new_event", original)
-                .build();
+        return ResponseMessage.builder().type(ResponseType.SUCCESSFUL).message("Updated the event: " + original.getName()).property("new_event", original).build();
     }
 
     public ResponseMessage createEvent(final Event event, final Optional<User> userLoggedIn) {
@@ -168,22 +137,50 @@ public class EventService extends BaseService {
         }
         eventDao.create(event);
 
-        return ResponseMessage.builder()
-                .type(ResponseType.SUCCESSFUL)
-                .property("event_id", event.getId())
-                .property("event_name", event.getName())
-                .message("Successfully created an event")
-                .build();
+        return ResponseMessage.builder().type(ResponseType.SUCCESSFUL).property("event_id", event.getId()).property("event_name", event.getName()).message("Successfully created an event").build();
 
     }
 
     public Optional<EventDTO> getEvent(final String id, final Optional<User> loggedInUser) {
         Event event = evaluateEvent(id);
-        User user = evaluateUserLoggedIn(loggedInUser);
-        if (user.isAuthorative()) {
+
+        if (loggedInUser.isPresent() && loggedInUser.get().isAuthorative()) {
             return Optional.of(new CompleteEventDTO(event));
         } else {
             return Optional.of(new EventDTO(event));
+        }
+    }
+
+    public ResponseMessage checkInEvent(final String userId, final String eventId, Optional<User> loggedInUser, boolean test) {
+        Event event = evaluateEvent(eventId);
+        if (!(event instanceof ControlledEvent)) {
+            throw ResponseException.builder().message("This event is a 'pay at the door' or a free event").type(ResponseType.CLIENT_ERROR).build();
+        }
+        ControlledEvent controlledEvent = (ControlledEvent) event;
+        User eventAdmin = evaluateUserIsAuthorized(loggedInUser, controlledEvent.getControlledBy());
+        User user = evaluateUserIsLoggedIn(userId);
+
+        if (!controlledEvent.getAttendees().containsUser(user)) {
+            return ResponseMessage.builder().message("This user is not allowed inside of this event.").type(ResponseType.UNAUTHORIZED).build();
+        } else if (controlledEvent.getCheckedInAttendees().containsUser(user)) {
+            return ResponseMessage.builder().message("This user has already checked in. Double check him/her.").type(ResponseType.UNAUTHORIZED).build();
+        } else {
+            return checkInEvent(controlledEvent, user, test);
+        }
+    }
+
+    private ResponseMessage checkInEvent(ControlledEvent controlledEvent, User user, boolean test) {
+        final Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.HOUR, 1);
+        Date anHourFromNow = cal.getTime();
+        Attendee attendee = controlledEvent.getAttendees().getAttendee(user).get();
+        String ticketString = "" + (attendee.getPlus() + 1) + " ticket" + (attendee.getPlus() > 0 ? "s" : "");
+        if (controlledEvent.getDate().before(anHourFromNow) || test) {
+            controlledEvent.getCheckedInAttendees().add(controlledEvent.getAttendees().getAttendee(user).get());
+            eventDao.update(controlledEvent);
+            return ResponseMessage.builder().message(String.format("The user has been checked into the event(%s)", ticketString)).type(ResponseType.ACCEPTED).build();
+        } else {
+            return ResponseMessage.builder().message(String.format("It is too early to be checked into the event, but the user may enter. (%s)", ticketString)).type(ResponseType.FOUND).build();
         }
     }
 
@@ -196,92 +193,75 @@ public class EventService extends BaseService {
 
             final Integer plus = Optional.of(Integer.valueOf((String) payment.getData().getMetadata().get("plus"))).orElse(0);
             if (event.isPresent() && user.isPresent()) {
-                if (event.get() instanceof PayedEvent) {
-                    PayedEvent payedEvent = (PayedEvent) event.get();
-                    Attendee attendee = Attendee.of(user.get().getId(), Calendar.getInstance().getTime(), plus);
-                    payedEvent.getAttendees().add(attendee);
-                    payedEvent.getRequestedAttendees().remove(attendee);
-                    payedEvent.getPayments().add(new EventPayment(user.get().getId(), paymentId));
-
-                    eventDao.update(payedEvent);
-                    return ResponseMessage.builder()
-                            .message("Successfully added user to the event.")
-                            .type(ResponseType.SUCCESSFUL)
-                            .build();
-                } else {
-                    return ResponseMessage.builder()
-                            .message("Not a payed event!")
-                            .type(ResponseType.NOT_FOUND)
-                            .build();
-                }
+                return updateEventWithProcessedPayment(event.get(), user.get(), paymentId, plus);
             } else {
-                return ResponseMessage.builder()
-                        .message("Event or user doesn't exist!")
-                        .type(ResponseType.NOT_FOUND)
-                        .build();
+                return ResponseMessage.builder().message("Event or user doesn't exist!").type(ResponseType.NOT_FOUND).build();
             }
         } else {
-            return ResponseMessage.builder()
-                    .message("Method not yet supported")
-                    .type(ResponseType.CLIENT_ERROR)
-                    .build();
+            return ResponseMessage.builder().message("Method not yet supported").type(ResponseType.CLIENT_ERROR).build();
+        }
+    }
+
+    private ResponseMessage updateEventWithProcessedPayment(Event event, User user, String paymentId, int plus) {
+        if (event instanceof PayedEvent) {
+            PayedEvent payedEvent = (PayedEvent) event;
+            Attendee attendee = Attendee.of(user.getId(), Calendar.getInstance().getTime(), plus);
+            payedEvent.getAttendees().add(attendee);
+            payedEvent.getRequestedAttendees().remove(attendee);
+            payedEvent.getPayments().add(new EventPayment(user.getId(), paymentId));
+
+            eventDao.update(payedEvent);
+            return ResponseMessage.builder().message("Successfully added user to the event.").type(ResponseType.SUCCESSFUL).build();
+        } else {
+            return ResponseMessage.builder().message("Not a payed event!").type(ResponseType.NOT_FOUND).build();
         }
     }
 
     public ResponseMessage newPayment(final String eventId, final String redirectUrl, int plus, final String paymentWebhook, final Optional<User> userOptional) throws IOException {
 
-        User user = evaluateUserLoggedIn(userOptional);
+        User user = evaluateUserIsLoggedIn(userOptional);
         Event event = evaluateEvent(eventId);
         if (plus < 0) {
             plus = 0;
         }
         if (event instanceof PayedEvent) {
-            if (!event.getAttendees().containsUser(user)) {
-                PayedEvent payedEvent = (PayedEvent) event;
-                final Map<String, Object> metaData = new HashMap<>();
-                metaData.put("user_id", user.getId());
-                metaData.put("event_id", event.getId());
-                metaData.put("plus", plus);
-                @SuppressWarnings("ConstantConditions") CreatePayment createPayment = new CreatePayment(null, event.getPrice().doubleValue() * (plus + 1), String.format("ISA Event: %s", event.getName()), redirectUrl, Optional.of(paymentWebhook), metaData);
-                ResponseOrError<Payment> paymentResponse = mollieClient.payments().create(createPayment);
-                if (paymentResponse.getError() == null) {
-                    payedEvent.getRequestedAttendees().add(Attendee.of(user.getId(), Calendar.getInstance().getTime()));
-                    eventDao.update(payedEvent);
-                    return ResponseMessage.builder()
-                            .message("Successfully created payment.")
-                            .property("paymentUrl", paymentResponse.getData().getLinks().getPaymentUrl())
-                            .type(ResponseType.REDIRECT).build();
-                } else {
-                    return ResponseMessage.builder()
-                            .message("Error processing payment!")
-                            .properties(paymentResponse.getError())
-                            .type(ResponseType.SERVER_ERROR)
-                            .build();
-                }
+            return createPaymentAndUpdateEvent((PayedEvent) event, user, plus, redirectUrl, paymentWebhook);
+        } else {
+            return ResponseMessage.builder().message("This event does not support online payments!").type(ResponseType.NOT_FOUND).build();
+        }
+    }
+
+    private ResponseMessage createPaymentAndUpdateEvent(PayedEvent event, User user, int plus, String redirectUrl, String paymentWebhook) throws IOException {
+        if (!event.getAttendees().containsUser(user)) {
+            PayedEvent payedEvent = (PayedEvent) event;
+            final Map<String, Object> metaData = new HashMap<>();
+            metaData.put("user_id", user.getId());
+            metaData.put("event_id", event.getId());
+            metaData.put("plus", plus);
+            @SuppressWarnings("ConstantConditions") CreatePayment createPayment =
+                    new CreatePayment(null,
+                            event.getPrice().doubleValue() * (plus + 1), String.format("ISA Event: %s", event.getName()),
+                            redirectUrl,
+                            Optional.of(paymentWebhook),
+                            metaData);
+            ResponseOrError<Payment> paymentResponse = mollieClient.payments().create(createPayment);
+            if (paymentResponse.getError() == null) {
+                payedEvent.getRequestedAttendees().add(Attendee.of(user.getId(), Calendar.getInstance().getTime()));
+                eventDao.update(payedEvent);
+                return ResponseMessage.builder().message("Successfully created payment.").property("paymentUrl", paymentResponse.getData().getLinks().getPaymentUrl()).type(ResponseType.REDIRECT).build();
             } else {
-                return ResponseMessage.builder()
-                        .message("Account is already attending this event!")
-                        .type(ResponseType.CLIENT_ERROR)
-                        .build();
+                return ResponseMessage.builder().message("Error creating payment!").properties(paymentResponse.getError()).type(ResponseType.SERVER_ERROR).build();
             }
         } else {
-            return ResponseMessage.builder()
-                    .message("This event does not support online payments!")
-                    .type(ResponseType.NOT_FOUND)
-                    .build();
+            return ResponseMessage.builder().message("Account is already attending this event!").type(ResponseType.CLIENT_ERROR).build();
         }
-
-
     }
 
     public ResponseMessage deleteEvent(final String id, final Optional<User> user) {
         Event event = evaluateEvent(id);
         evaluateUserIsAuthorized(user, UserType.ISA_ADMIN);
         eventDao.delete(event);
-        return ResponseMessage.builder()
-                .message("Deleted event: " + event.getName())
-                .type(ResponseType.SUCCESSFUL)
-                .build();
+        return ResponseMessage.builder().message("Deleted event: " + event.getName()).type(ResponseType.SUCCESSFUL).build();
     }
 
     public List<EventDTO> getAll(final Boolean includePast, final Optional<User> loggedInUser) {

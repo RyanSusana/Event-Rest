@@ -27,7 +27,7 @@ public class AttendedEventDTO extends EventDTO {
             throw new IllegalStateException("User is not attending this event!");
         }
         if (attendee.get().getPlus() > 0) {
-            setName(event.getName() + String.format(" (plus: %d)", attendee.get().getPlus()));
+            setName(event.getName() + String.format(" (%d tickets)", (attendee.get().getPlus() + 1)));
         } else {
             setName(event.getName());
         }

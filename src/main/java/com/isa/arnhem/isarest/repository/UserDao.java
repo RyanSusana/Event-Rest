@@ -71,6 +71,10 @@ public class UserDao extends CrudDao<User> {
         return Optional.ofNullable(findOne("{_id: #}", userId).as(User.class));
     }
 
+    public Optional<User> findByTempId(String userId) {
+        return Optional.ofNullable(findOne("{temp_id: #}", userId).as(User.class));
+    }
+
     @Override
     public void update(User item) {
         getCollection().update("{_id: #}", item.getId()).with(item);

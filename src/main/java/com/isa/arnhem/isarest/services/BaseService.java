@@ -30,16 +30,22 @@ public class BaseService {
 
     private User evaluateUser(Optional<User> user, Optional<UserType> userType) {
         if (!user.isPresent()) {
-            throw ResponseException.builder().message("You must be logged in to do this.").type(ResponseType.UNAUTHORIZED).build();
+            throw ResponseException.builder().message("This user doesn't exist").type(ResponseType.NOT_FOUND).build();
         }
         userType.ifPresent(userType1 -> {
             if (!user.get().getType().hasEqualRightsTo(userType1)) {
-                throw ResponseException.builder().message("You are not authorized to make this type of request").type(ResponseType.UNAUTHORIZED).build();
+                throw ResponseException.builder().message("This user is not authorized to make this type of request").type(ResponseType.UNAUTHORIZED).build();
             }
         });
+        evaluateNotBanned(user.get());
         return user.get();
     }
 
+    private void evaluateNotBanned(User user){
+        if(!user.getType().hasEqualRightsTo(UserType.STUDENT)){
+            throw ResponseException.builder().message("This user is not allowed to use the service").type(ResponseType.UNAUTHORIZED).build();
+        }
+    }
     User evaluateUserIsAuthorized(Optional<User> user, UserType type) {
         return evaluateUser(user, Optional.ofNullable(type));
     }
@@ -52,16 +58,20 @@ public class BaseService {
         evaluateUser(Optional.ofNullable(user), Optional.ofNullable(userType));
     }
 
-    User evaluateUserLoggedIn(String userString) {
+    User evaluateUserIsLoggedIn(String userString) {
         return evaluateUserIsAuthorized(userString, UserType.STUDENT);
     }
 
-    User evaluateUserLoggedIn(Optional<User> user) {
-        return evaluateUserIsAuthorized(user, UserType.STUDENT);
+    User evaluateUserIsLoggedIn(Optional<User> user) {
+        try {
+            return evaluateUserIsAuthorized(user, UserType.STUDENT);
+        } catch (ResponseException e) {
+            throw ResponseException.builder().message(String.format("You must be logged in as at least a %s to do this.", e.getType())).type(ResponseType.UNAUTHORIZED).build();
+        }
     }
 
     Event evaluateEvent(String eventId) {
-        Optional<Event> event = eventDao.findById(eventId);
+        Optional<Event> event = eventDao.findByString(eventId);
         if (!event.isPresent()) {
             throw ResponseException.builder().message("Event not found!").type(ResponseType.NOT_FOUND).build();
         }

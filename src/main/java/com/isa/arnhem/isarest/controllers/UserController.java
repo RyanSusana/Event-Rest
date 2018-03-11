@@ -2,6 +2,7 @@ package com.isa.arnhem.isarest.controllers;
 
 
 import com.isa.arnhem.isarest.dto.AttendedEventDTO;
+import com.isa.arnhem.isarest.dto.Response;
 import com.isa.arnhem.isarest.dto.ResponseMessage;
 import com.isa.arnhem.isarest.models.user.User;
 import com.isa.arnhem.isarest.models.user.UserType;
@@ -37,12 +38,11 @@ public class UserController extends SecuredController {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ResponseMessage> addUser(@RequestBody User user) {
+    public ResponseEntity<Response> addUser(@RequestBody User user) {
         return userService.addUser(user).toResponseEntity();
     }
 
     @RequestMapping(path = "/secured/self", method = RequestMethod.POST)
-
     public @ResponseBody
     User getSelfUser(HttpServletRequest request) {
         return userService.getSelfUser(getLoggedInUser());
@@ -55,7 +55,7 @@ public class UserController extends SecuredController {
     }
 
     @RequestMapping(path = "/{id}/rank", method = RequestMethod.POST)
-    public ResponseEntity<ResponseMessage> updateRank(@PathVariable("id") String userId, @RequestParam("rank") String rank) {
+    public ResponseEntity<Response> updateRank(@PathVariable("id") String userId, @RequestParam("rank") String rank) {
         return userService.updateRank(userId, rank, getLoggedInUser()).toResponseEntity();
     }
 
@@ -73,8 +73,8 @@ public class UserController extends SecuredController {
     }
 
     @RequestMapping(path = "/activate/{id}", method = RequestMethod.GET)
-    public ResponseEntity<String> activateUser(@PathVariable("id") String id) {
-        return userService.activateUser(id);
+    public ResponseEntity<Response> activateUser(@PathVariable("id") String id) {
+        return userService.activateUser(id).toResponseEntity();
     }
 
     @RequestMapping(path = "/logout", method = RequestMethod.GET)

@@ -43,8 +43,6 @@ public class User implements Identifiable {
     @JsonProperty("activated")
     private boolean activated;
 
-    @JsonProperty("banned")
-    private boolean banned = false;
 
     public User() {
         this.creationDate = Calendar.getInstance().getTime();

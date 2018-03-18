@@ -71,7 +71,7 @@ public class UserService extends BaseService {
         }
 
         if (userDao.findByUsername(user.getUsername()).isPresent()) {
-            return ResponseMessage.builder().message("This username already taken!").type(ResponseType.CLIENT_ERROR).build();
+            return ResponseMessage.builder().message("This username is already taken!").type(ResponseType.CLIENT_ERROR).build();
         }
         if (!EmailValidator.getInstance().isValid(user.getEmail())) {
             return ResponseMessage.builder().message("This is an invalid email!").type(ResponseType.CLIENT_ERROR).build();

@@ -24,7 +24,6 @@ public class UserDetail implements UserDetails {
 
     @Override
     public String getPassword() {
-
         return user.getPassword();
     }
 
@@ -50,6 +49,6 @@ public class UserDetail implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return !user.isBanned();
+        return user.getType().hasEqualRightsTo(UserType.STUDENT);
     }
 }

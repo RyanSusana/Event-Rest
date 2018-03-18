@@ -24,7 +24,7 @@ public interface Response {
     }
 
     default ResponseEntity<Response> toResponseEntity() {
-        return new ResponseEntity<Response>(this, HttpStatus.valueOf(getType().getStatus()));
+        return new ResponseEntity<>(this, HttpStatus.valueOf(getType().getStatus()));
     }
 
     @JsonProperty("status_code")

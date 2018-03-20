@@ -17,6 +17,8 @@ import java.util.UUID;
 @Setter
 public class User implements Identifiable {
 
+
+    @JsonProperty("id")
     private String id;
 
     @JsonProperty("temp_id")
@@ -76,7 +78,7 @@ public class User implements Identifiable {
         if (obj instanceof User) {
             return (((User) obj).getId().equals(this.getId()));
         } else if (obj instanceof Attendee) {
-            return ((Attendee) obj).getUserId().equals(this.getId());
+            return ((Attendee) obj).getUser().equals(this);
         } else {
             return Objects.equals(this, obj);
         }
@@ -87,4 +89,7 @@ public class User implements Identifiable {
         return Objects.hash(this.getId());
     }
 
+    public UserReference getReference(){
+        return UserReference.of(this);
+    }
 }

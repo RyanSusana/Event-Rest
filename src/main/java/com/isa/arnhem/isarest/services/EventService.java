@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -42,7 +43,7 @@ public class EventService extends BaseService {
         final User user = evaluateUserIsLoggedIn(userId);
         final Event event = evaluateEvent(eventId);
 
-        Attendee attendee = Attendee.of(userId, Calendar.getInstance().getTime());
+        Attendee attendee = Attendee.of(user, Calendar.getInstance().getTime());
 
         if (!event.getAttendees().contains(attendee)) {
             return ResponseMessage.builder().message("Event is already not being attended by this user.").type(ResponseType.CLIENT_ERROR).build();
@@ -58,7 +59,7 @@ public class EventService extends BaseService {
     }
 
     private ResponseMessage addUserToEvent(final Event event, final User user) {
-        final Attendee attendee = Attendee.of(user.getId(), Calendar.getInstance().getTime());
+        final Attendee attendee = Attendee.of(user, Calendar.getInstance().getTime());
 
         if (event.getAttendees().contains(attendee)) {
             return ResponseMessage.builder().message("Event is already being attended by this user.").type(ResponseType.CLIENT_ERROR).build();
@@ -98,7 +99,7 @@ public class EventService extends BaseService {
             return ResponseMessage.builder().message("User doesn't exist!").type(ResponseType.NOT_FOUND).build();
         }
 
-        if (event.getAttendees().contains(Attendee.of(userToAdd.get().getId(), null))) {
+        if (event.getAttendees().contains(Attendee.of(userToAdd.get(), null))) {
             return ResponseMessage.builder().message("Event is already being attended by this user.").type(ResponseType.CLIENT_ERROR).build();
         }
         if (event instanceof ControlledEvent) {
@@ -108,7 +109,7 @@ public class EventService extends BaseService {
             Optional<Attendee> attendee = controlledEvent.getRequestedAttendees().getAttendee(userToAdd.get());
 
             if (!attendee.isPresent()) {
-                controlledEvent.getAttendees().add(Attendee.of(userToAdd.get().getId(), Calendar.getInstance().getTime(), plus));
+                controlledEvent.getAttendees().add(Attendee.of(userToAdd.get(), Calendar.getInstance().getTime(), plus));
             } else {
                 attendee.get().setPlus(plus);
                 controlledEvent.getAttendees().add(attendee.get());
@@ -187,13 +188,14 @@ public class EventService extends BaseService {
     public ResponseMessage processPayment(final String paymentId) throws IOException {
         final ResponseOrError<Payment> payment = mollieClient.payments().get(paymentId);
 
+
         if (payment.getData().getStatus().equals("paid")) {
             final Optional<Event> event = eventDao.findById((String) payment.getData().getMetadata().get("event_id"));
             final Optional<User> user = userDao.findById((String) payment.getData().getMetadata().get("user_id"));
 
             final Integer plus = Optional.of(Integer.valueOf((String) payment.getData().getMetadata().get("plus"))).orElse(0);
             if (event.isPresent() && user.isPresent()) {
-                return updateEventWithProcessedPayment(event.get(), user.get(), paymentId, plus);
+                return updateEventWithProcessedPayment(event.get(), user.get(), payment.getData(), plus);
             } else {
                 return ResponseMessage.builder().message("Event or user doesn't exist!").type(ResponseType.NOT_FOUND).build();
             }
@@ -202,13 +204,13 @@ public class EventService extends BaseService {
         }
     }
 
-    private ResponseMessage updateEventWithProcessedPayment(Event event, User user, String paymentId, int plus) {
+    private ResponseMessage updateEventWithProcessedPayment(Event event, User user, Payment payment, int plus) {
         if (event instanceof PayedEvent) {
             PayedEvent payedEvent = (PayedEvent) event;
-            Attendee attendee = Attendee.of(user.getId(), Calendar.getInstance().getTime(), plus);
+            Attendee attendee = Attendee.of(user, Calendar.getInstance().getTime(), plus);
             payedEvent.getAttendees().add(attendee);
             payedEvent.getRequestedAttendees().remove(attendee);
-            payedEvent.getPayments().add(new EventPayment(user.getId(), paymentId));
+            payedEvent.getPayments().add(new EventPayment(user.getReference(), payment.getId(), BigDecimal.valueOf(payment.getAmount())));
 
             eventDao.update(payedEvent);
             return ResponseMessage.builder().message("Successfully added user to the event.").type(ResponseType.SUCCESSFUL).build();
@@ -246,7 +248,7 @@ public class EventService extends BaseService {
                             metaData);
             ResponseOrError<Payment> paymentResponse = mollieClient.payments().create(createPayment);
             if (paymentResponse.getError() == null) {
-                payedEvent.getRequestedAttendees().add(Attendee.of(user.getId(), Calendar.getInstance().getTime()));
+                payedEvent.getRequestedAttendees().add(Attendee.of(user, Calendar.getInstance().getTime()));
                 eventDao.update(payedEvent);
                 return ResponseMessage.builder().message("Successfully created payment.").property("paymentUrl", paymentResponse.getData().getLinks().getPaymentUrl()).type(ResponseType.REDIRECT).build();
             } else {

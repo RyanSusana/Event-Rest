@@ -1,5 +1,6 @@
 package com.isa.arnhem.isarest.models.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -15,10 +16,9 @@ import java.util.UUID;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Getter
 @Setter
-public class User implements Identifiable {
+public class User implements Identifiable{
 
 
-    @JsonProperty("id")
     private String id;
 
     @JsonProperty("temp_id")
@@ -89,6 +89,7 @@ public class User implements Identifiable {
         return Objects.hash(this.getId());
     }
 
+    @JsonIgnore
     public UserReference getReference(){
         return UserReference.of(this);
     }

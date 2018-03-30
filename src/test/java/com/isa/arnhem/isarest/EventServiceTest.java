@@ -183,7 +183,7 @@ public class EventServiceTest {
         assertTrue(response.isSuccessful());
         assertTrue(normalEvent.getAttendees().containsUser(ryan));
 
-        controlledEvent.getAttendees().add(Attendee.of(ryan.getId(), Calendar.getInstance().getTime()));
+        controlledEvent.getAttendees().add(Attendee.of(ryan, Calendar.getInstance().getTime()));
 
         response = eventService.addUserToEvent("controlled", "ryan");
         assertFalse(response.isSuccessful());
@@ -192,7 +192,7 @@ public class EventServiceTest {
         response = eventService.removeUserFromEvent("payed", "ryan");
         assertFalse(response.isSuccessful());
 
-        payedEvent.getAttendees().add(Attendee.of("ryan", Calendar.getInstance().getTime()));
+        payedEvent.getAttendees().add(Attendee.of(ryan, Calendar.getInstance().getTime()));
         response = eventService.removeUserFromEvent("payed", "ryan");
         assertFalse(response.isSuccessful());
 
@@ -246,7 +246,7 @@ public class EventServiceTest {
         response = eventService.addUserToControlledEvent("normal", "ryan", Optional.of(admin), 10);
         assertTrue(response.isSuccessful());
 
-        controlledEvent.getRequestedAttendees().add(Attendee.of(ryan.getId(), Calendar.getInstance().getTime()));
+        controlledEvent.getRequestedAttendees().add(Attendee.of(ryan, Calendar.getInstance().getTime()));
         response = eventService.addUserToControlledEvent("controlled", "ryan", Optional.of(admin), 10);
         assertTrue(response.isSuccessful());
         assertTrue(controlledEvent.getAttendees().containsUser(ryan));

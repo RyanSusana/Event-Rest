@@ -3,7 +3,9 @@ package com.isa.arnhem.isarest.services;
 import com.isa.arnhem.isarest.dto.*;
 import com.isa.arnhem.isarest.models.event.Event;
 import com.isa.arnhem.isarest.models.event.EventList;
+import com.isa.arnhem.isarest.models.user.Attendee;
 import com.isa.arnhem.isarest.models.user.User;
+import com.isa.arnhem.isarest.models.user.UserReference;
 import com.isa.arnhem.isarest.models.user.UserType;
 import com.isa.arnhem.isarest.repository.DaoRepository;
 import org.apache.commons.validator.routines.EmailValidator;
@@ -33,34 +35,34 @@ public class UserService extends BaseService {
         return userDao.getAll();
     }
 
-    public Collection<User> getAllUsers(String q, Integer l, String eventId, Optional<User> loggedInUser) {
-        Optional<String> searchTerm = Optional.ofNullable(q);
-        Optional<Integer> limit = Optional.ofNullable(l);
-        Optional<Event> event = eventId == null ? Optional.empty() : eventDao.findByString(eventId);
+    public Collection<BasicUserDTO> getAllUsers(String q, Integer l, String eventId, Optional<User> loggedInUser) {
+        int limit = Optional.ofNullable(l).orElse(Integer.MAX_VALUE);
+
 
         User user = evaluateUserIsLoggedIn(loggedInUser);
 
-        final Collection<User> result;
-        result = searchTerm.map(userDao::search).orElseGet(userDao::getAll);
+        if (eventId != null) {
+            Event event = evaluateEvent(eventId);
+            int count = 0;
+            final List<BasicUserDTO> result = new ArrayList<>();
 
-        if (event.isPresent() && user.isAuthorative()) {
-            result.retainAll(event.get().getAttendees());
-        }
-        if (limit.isPresent()) {
-            List<User> newResult = new ArrayList<>();
-            int current = 0;
-            for (User u : result) {
-                if (current >= limit.get()) {
+            for (Attendee attendee : event.getAttendees()) {
+                if (count > limit)
                     break;
+                if (userMatch(q, attendee.getUser())) {
+                    result.add(new BasicUserDTO(attendee.getUser()));
+                    count++;
                 }
-                newResult.add(u);
-                current++;
             }
-            return newResult;
-
-        } else {
             return result;
+        } else {
+            return userDao.search(q, limit);
         }
+    }
+
+    private boolean userMatch(String q, UserReference user) {
+        q = q.trim().toLowerCase();
+        return user.getFullName().toLowerCase().contains(q) || user.getUsername().toLowerCase().contains(q) || user.getEmail().toLowerCase().contains(q);
     }
 
     public ResponseMessage addUser(User user) {
@@ -88,14 +90,14 @@ public class UserService extends BaseService {
         user.setActivated(false);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userDao.create(user);
-        return ResponseMessage.builder().message("Created: " + user.getUsername()).type(ResponseType.SUCCESSFUL).build();
+        return ResponseMessage.builder().message(String.format("You have successfully registered at ISA, %s! Please login with your fresh account.", user.getUsername())).type(ResponseType.SUCCESSFUL).build();
     }
 
 
     public User getSelfUser(Optional<User> loggedInUser) {
         try {
             return evaluateUserIsLoggedIn(loggedInUser);
-        }catch (ResponseException e){
+        } catch (ResponseException e) {
             throw ResponseException.builder().type(ResponseType.UNAUTHORIZED).message("Incorrect username/password.").build();
         }
     }
@@ -150,22 +152,23 @@ public class UserService extends BaseService {
         return ReturnedObject.of(userDao.findByString(id));
     }
 
-    public Map<String, Set<AttendedEventDTO>> getUserSignUps(String id) {
+    public Map<String, Set<EventDTO>> getUserSignUps(String id) {
 
-        TreeSet<AttendedEventDTO> events = new TreeSet<>();
+        TreeSet<EventDTO> events = new TreeSet<>();
 
 
-        EventList.of(eventDao.find("{'attendees.user_id': #}", id)
+
+        EventList.of(eventDao.find("{'attendees.user._id': #}", id)
                 .projection("{_id: 1, price: 1, name: 1, main_image: 1, event_type: 1, date: 1, attendees: 1}")
                 .as(Event.class)).filterOutPastEvents().forEach((event -> events.add(new AttendedEventDTO(event, id, false))));
 
-        TreeSet<AttendedEventDTO> requestedEvents = new TreeSet<>();
+        TreeSet<EventDTO> requestedEvents = new TreeSet<>();
 
-        EventList.of(eventDao.find("{'requested_attendees.user_id': #}", id)
+        EventList.of(eventDao.find("{'requested_attendees.user._id': #}", id)
                 .projection("{_id: 1, price: 1, name: 1, main_image: 1, event_type: 1, date: 1, requested_attendees: 1}")
                 .as(Event.class)).filterOutPastEvents().forEach((event -> requestedEvents.add(new AttendedEventDTO(event, id, true))));
 
-        Map<String, Set<AttendedEventDTO>> eventMap = new HashMap<>();
+        Map<String, Set<EventDTO>> eventMap = new HashMap<>();
         eventMap.put("attending_events", events.descendingSet());
         eventMap.put("requested_events", requestedEvents.descendingSet());
         return eventMap;

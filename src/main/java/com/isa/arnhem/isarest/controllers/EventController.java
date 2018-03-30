@@ -90,7 +90,7 @@ public class EventController extends SecuredController {
 
     @RequestMapping(path = "/{id}/check-in", method = RequestMethod.PUT)
     public ResponseEntity<Response> checkInEvent(@PathVariable("id") String eventId, @RequestParam String userId, @RequestParam(value = "test", required = false, defaultValue = "false") boolean test) {
-        return eventService.checkInEvent(userId, eventId, getLoggedInUser(), test).toResponseEntity();
+        return eventService.updateEventWithCheckin(userId, eventId, getLoggedInUser(), test).toResponseEntity();
     }
 
     @RequestMapping(path = "/{id}/attendees", method = RequestMethod.GET)

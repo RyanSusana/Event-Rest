@@ -21,7 +21,7 @@ public class Attendee {
     private int plus;
 
     @JsonCreator
-    private Attendee(UserReference user, Date signUpDate, int plus) {
+    private Attendee(@JsonProperty("user") UserReference user, @JsonProperty("sign_up_date") Date signUpDate, @JsonProperty("plus")int plus) {
         this.user = user;
         this.signUpDate = signUpDate;
         this.plus = plus;

@@ -1,5 +1,6 @@
 package com.isa.arnhem.isarest.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.isa.arnhem.isarest.models.event.ControlledEvent;
 import com.isa.arnhem.isarest.models.event.Event;
@@ -11,7 +12,8 @@ import java.util.Optional;
 
 @Getter
 public class AttendedEventDTO extends EventDTO {
-    @JsonProperty("attendees")
+
+    @JsonIgnore
     private final AttendeeSet attendees;
 
 

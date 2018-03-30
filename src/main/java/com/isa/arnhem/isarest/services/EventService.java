@@ -152,25 +152,31 @@ public class EventService extends BaseService {
         }
     }
 
-    public ResponseMessage checkInEvent(final String userId, final String eventId, Optional<User> loggedInUser, boolean test) {
+    public ResponseMessage updateEventWithCheckin(final String userId, final String eventId, Optional<User> loggedInUser, boolean test) {
         Event event = evaluateEvent(eventId);
+        User user = evaluateUserIsLoggedIn(userId);
         if (!(event instanceof ControlledEvent)) {
+            if (event.getPrice().intValue() == 0) {
+                event.getAttendees().add(Attendee.of(user, Calendar.getInstance().getTime()));
+                eventDao.update(event);
+                return ResponseMessage.builder().message(String.format("The user has been checked into the event")).type(ResponseType.ACCEPTED).build();
+            }
             throw ResponseException.builder().message("This event is a 'pay at the door' or a free event").type(ResponseType.CLIENT_ERROR).build();
         }
         ControlledEvent controlledEvent = (ControlledEvent) event;
         User eventAdmin = evaluateUserIsAuthorized(loggedInUser, controlledEvent.getControlledBy());
-        User user = evaluateUserIsLoggedIn(userId);
 
         if (!controlledEvent.getAttendees().containsUser(user)) {
             return ResponseMessage.builder().message("This user is not allowed inside of this event.").type(ResponseType.UNAUTHORIZED).build();
         } else if (controlledEvent.getCheckedInAttendees().containsUser(user)) {
             return ResponseMessage.builder().message("This user has already checked in. Double check him/her.").type(ResponseType.UNAUTHORIZED).build();
         } else {
-            return checkInEvent(controlledEvent, user, test);
+            return updateEventWithCheckin(controlledEvent, user, test);
         }
     }
 
-    private ResponseMessage checkInEvent(ControlledEvent controlledEvent, User user, boolean test) {
+
+    private ResponseMessage updateEventWithCheckin(ControlledEvent controlledEvent, User user, boolean test) {
         final Calendar cal = Calendar.getInstance();
         cal.add(Calendar.HOUR, 1);
         Date anHourFromNow = cal.getTime();
@@ -187,7 +193,6 @@ public class EventService extends BaseService {
 
     public ResponseMessage processPayment(final String paymentId) throws IOException {
         final ResponseOrError<Payment> payment = mollieClient.payments().get(paymentId);
-
 
         if (payment.getData().getStatus().equals("paid")) {
             final Optional<Event> event = eventDao.findById((String) payment.getData().getMetadata().get("event_id"));

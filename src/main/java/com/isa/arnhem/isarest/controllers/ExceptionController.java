@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 public class ExceptionController {
     @ExceptionHandler(ResponseException.class)
     public ResponseEntity<Response> handleResponseException(ResponseException e) {
-        return e.toResponseEntity();
+        return ResponseMessage.builder().properties(e.getProperties()).type(e.getType()).message(e.getMessage()).build().toResponseEntity();
     }
 
     @ExceptionHandler(Exception.class)

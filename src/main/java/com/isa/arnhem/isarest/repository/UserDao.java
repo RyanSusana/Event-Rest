@@ -1,16 +1,16 @@
 package com.isa.arnhem.isarest.repository;
 
 import com.google.common.collect.Lists;
+import com.isa.arnhem.isarest.dto.BasicUserDTO;
 import com.isa.arnhem.isarest.models.user.User;
 import com.isa.arnhem.isarest.models.user.UserType;
+import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.CollationStrength;
 import org.jongo.Jongo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -23,7 +23,12 @@ public class UserDao extends CrudDao<User> {
     }
 
     public Optional<User> findByUsername(String username) {
-        return Optional.ofNullable(findOne("{username: #}", Pattern.compile("(?i)" + username)).as(User.class));
+        final Iterator<User> user = getCollection().find("{username: #}", username)
+                .with(dbCursor -> dbCursor.setCollation(Collation.builder()
+                        .collationStrength(CollationStrength.PRIMARY)
+                        .locale("en")
+                        .build())).as(User.class).iterator();
+        return user.hasNext() ? Optional.of(user.next()) : Optional.empty();
     }
 
     public List<User> findByTypeAndAbove(UserType type) {
@@ -34,6 +39,7 @@ public class UserDao extends CrudDao<User> {
     }
 
     public Optional<User> findByUsernameOrEmail(String s) {
+
         return findByUsername(s).or(() -> findByEmail(s));
     }
 
@@ -42,21 +48,18 @@ public class UserDao extends CrudDao<User> {
     }
 
     public Optional<User> findByEmail(String email) {
-        return Optional.ofNullable(findOne("{email: #}", Pattern.compile("(?i)" + email)).as(User.class));
+        final Iterator<User> user = getCollection().find("{email: #}", email)
+                .with(dbCursor -> dbCursor.setCollation(Collation.builder()
+                        .collationStrength(CollationStrength.PRIMARY)
+                        .locale("en")
+                        .build())).as(User.class).iterator();
+        return user.hasNext() ? Optional.of(user.next()) : Optional.empty();
     }
 
-    private List<User> searchByUsername(String s) {
-        return Lists.newArrayList(find("{username: #}", Pattern.compile("(?i).*" + s + ".*")).as(User.class).iterator());
-    }
-
-    private List<User> searchByEmail(String s) {
-        return Lists.newArrayList(find("{email: #}", Pattern.compile("(?i).*" + s + ".*")).as(User.class).iterator());
-    }
-
-    public Set<User> search(String s) {
-        Set<User> results = new TreeSet<>((o1, o2) -> o1.getUsername().compareToIgnoreCase(o2.getUsername()));
-        results.addAll(searchByUsername(s));
-        results.addAll(searchByEmail(s));
+    public Set<BasicUserDTO> search(String s, int limit) {
+        Set<BasicUserDTO> results = new TreeSet<>((o1, o2) -> o1.getUsername().compareToIgnoreCase(o2.getUsername()));
+        final Pattern pattern = Pattern.compile("(?i).*" + s + ".*");
+        find("{$or: [{email: #}, {username: #}]}", pattern, pattern).limit(limit).as(User.class).iterator().forEachRemaining(u -> results.add(new BasicUserDTO(u.getReference())));
         return results;
     }
 

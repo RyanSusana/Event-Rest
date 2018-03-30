@@ -1,11 +1,10 @@
 package com.isa.arnhem.isarest.controllers;
 
 
-import com.isa.arnhem.isarest.dto.AttendedEventDTO;
-import com.isa.arnhem.isarest.dto.Response;
-import com.isa.arnhem.isarest.dto.ResponseMessage;
+import com.isa.arnhem.isarest.dto.*;
 import com.isa.arnhem.isarest.models.user.User;
 import com.isa.arnhem.isarest.models.user.UserType;
+import com.isa.arnhem.isarest.services.BaseService;
 import com.isa.arnhem.isarest.services.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +31,9 @@ public class UserController extends SecuredController {
         return userService.getAll();
     }
 
+
     @GetMapping()
-    public Collection<User> getAllUsers(@RequestParam(value = "q", required = false) String q, @RequestParam(value = "limit", required = false) Integer l, @RequestParam(value = "event", required = false) String eventId) {
+    public Collection<BasicUserDTO> getAllUsers(@RequestParam(value = "q", defaultValue = "") String q, @RequestParam(value = "limit", required = false) Integer l, @RequestParam(value = "event", required = false) String eventId) {
         return userService.getAllUsers(q, l, eventId, getLoggedInUser());
     }
 
@@ -68,7 +68,7 @@ public class UserController extends SecuredController {
 
     @RequestMapping(path = "/{id}/events", method = RequestMethod.GET)
     public @ResponseBody
-    Map<String, Set<AttendedEventDTO>> getUserSignUps(@PathVariable("id") String id) {
+    Map<String, Set<EventDTO>> getUserSignUps(@PathVariable("id") String id) {
         return userService.getUserSignUps(id);
     }
 

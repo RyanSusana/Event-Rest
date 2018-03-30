@@ -1,5 +1,6 @@
 package com.isa.arnhem.isarest.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.isa.arnhem.isarest.models.Description;
 import com.isa.arnhem.isarest.models.event.Event;
@@ -10,7 +11,8 @@ import java.util.Date;
 import java.util.Map;
 
 @Getter
-public class EventDTO extends ReturnedObject implements Comparable<EventDTO> {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class EventDTO  implements Comparable<EventDTO> {
     @JsonProperty("_id")
     private final String id;
     @JsonProperty("priority")
